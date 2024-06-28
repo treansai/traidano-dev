@@ -1,0 +1,3 @@
+api-config:
+  api_key: ${API_KEY:"api_key"}
+  secret: ${SECRET_KET:"secret"}

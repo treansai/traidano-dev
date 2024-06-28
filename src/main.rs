@@ -1,3 +1,7 @@
+mod trade;
+mod configuration;
+
 fn main() {
-    println!("Hello, world!");
+    // connection to
+    todo!()
 }
