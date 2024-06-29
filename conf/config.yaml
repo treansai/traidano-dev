@@ -1,3 +1,4 @@
 api-config:
-  api_key: ${API_KEY:"api_key"}
-  secret: ${SECRET_KET:"secret"}
+  api_key: PKGA4DTIP5MZM8H0KQJL
+  secret: bEBazJLr2BdbyKDLNMPQKrSxGzwELRBYGICg5Jh1
+  base_url: https://paper-api.alpaca.markets/v2
