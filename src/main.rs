@@ -1,11 +1,19 @@
+extern crate core;
+
+use std::sync::Arc;
 use apca::{ApiInfo, Client, api::v2::{account}, RequestError};
 use apca::api::v2::account::{Account, GetError};
+use axum::{Router, routing::get};
+use axum::handler::Handler;
+use axum::routing::post;
 use tokio::task::unconstrained;
 use tracing::instrument::WithSubscriber;
+use traidano::AppState;
 use crate::configuration::BaseConfig;
-
+use crate::handlers::{create_order, get_account};
 mod trade;
 mod configuration;
+mod handlers;
 
 
 #[tokio::main]
@@ -26,25 +34,22 @@ async fn main() {
 
     // alpaca client
     let client = Client::new(api_config);
-    let account = get_account(client).await.unwrap();
 
-    tracing::event!(
-        name: "account_info",
-        tracing::Level::INFO,
-        r#"
-        account_id : {:?}
-        "#,
-        account.id
-    )
+    // shared state
+    let state = AppState {
+        alpaca_client: client
+    };
+    let shared_state = Arc::new(state);
 
-}
+    // the app server
+    let app = Router::new()
+        .route("/account", get(get_account))
+        .route("/order", post(create_order))
+        .with_state(shared_state);
 
-async fn get_account(client: Client) -> Result<Account, ()> {
-    tracing::info!("app_events: get account information");
-    let account = client
-        .issue::<account::Get>(&())
-        .await
-        .expect("error to get account");
+    // listener
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
+        .await.unwrap();
 
-    Ok(account)
+    axum::serve(listener, app).await.unwrap();
 }
