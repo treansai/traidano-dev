@@ -1,23 +1,33 @@
-use apca::api::v2::order;
-use apca::api::v2::order::CreateReqInit;
+use apca::api::v2::order::{Class, StopLoss, TakeProfit, TimeInForce, Type};
 use apca::Client;
 use axum::http::StatusCode;
+use num_decimal::Num;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 pub struct Config {
-    api_key: String,
-    api_secret: String
+    pub api_key: String,
+    pub api_secret: String,
 }
 pub struct AppState {
-    pub alpaca_client: Client
+    pub alpaca_client: Client,
 }
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct CreateOrderRequest {
-    pub create_req_init: CreateReqInit,
     pub symbol: String,
     pub quantity: i32,
-    pub side: order::Side
+    pub side: String,
+    pub class: Class,
+    pub type_: Type,
+    pub time_in_force: TimeInForce,
+    pub limit_price: Option<Num>,
+    pub stop_price: Option<Num>,
+    pub trail_price: Option<Num>,
+    pub trail_percent: Option<Num>,
+    pub take_profit: Option<TakeProfit>,
+    pub stop_loss: Option<StopLoss>,
+    pub extended_hours: bool,
+    pub client_order_id: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
