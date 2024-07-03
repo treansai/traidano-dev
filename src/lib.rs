@@ -1,4 +1,4 @@
-use apca::api::v2::order::{Class, StopLoss, TakeProfit, TimeInForce, Type};
+use apca::api::v2::order::{Class, CreateReqInit, StopLoss, TakeProfit, TimeInForce, Type};
 use apca::Client;
 use axum::http::StatusCode;
 use num_decimal::Num;
@@ -50,5 +50,13 @@ impl From<OrderError> for StatusCode {
             OrderError::CreationFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
             OrderError::InvalidParameters(_) => StatusCode::BAD_REQUEST,
         }
+    }
+}
+
+pub fn create_limit_order(limit_price: Num) -> CreateReqInit {
+    CreateReqInit {
+        type_: Type::Limit,
+        limit_price: Some(limit_price),
+        ..Default::default()
     }
 }
