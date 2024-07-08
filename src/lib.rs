@@ -1,7 +1,5 @@
-use apca::api::v2::order::{Class, CreateReqInit, StopLoss, TakeProfit, TimeInForce, Type};
 use apca::Client;
 use axum::http::StatusCode;
-use num_decimal::Num;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -12,24 +10,6 @@ pub struct Config {
 pub struct AppState {
     pub alpaca_client: Client,
 }
-#[derive(Debug, Default, Clone, Deserialize)]
-pub struct CreateOrderRequest {
-    pub symbol: String,
-    pub quantity: i32,
-    pub side: String,
-    pub class: Class,
-    pub type_: Type,
-    pub time_in_force: TimeInForce,
-    pub limit_price: Option<Num>,
-    pub stop_price: Option<Num>,
-    pub trail_price: Option<Num>,
-    pub trail_percent: Option<Num>,
-    pub take_profit: Option<TakeProfit>,
-    pub stop_loss: Option<StopLoss>,
-    pub extended_hours: bool,
-    pub client_order_id: Option<String>,
-}
-
 #[derive(Debug, Serialize)]
 pub struct OrderResponse {
     pub id: String,
@@ -50,13 +30,5 @@ impl From<OrderError> for StatusCode {
             OrderError::CreationFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
             OrderError::InvalidParameters(_) => StatusCode::BAD_REQUEST,
         }
-    }
-}
-
-pub fn create_limit_order(limit_price: Num) -> CreateReqInit {
-    CreateReqInit {
-        type_: Type::Limit,
-        limit_price: Some(limit_price),
-        ..Default::default()
     }
 }
