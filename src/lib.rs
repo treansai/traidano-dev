@@ -1,15 +1,16 @@
-use apca::Client;
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use base::Client;
+
+mod base;
+pub mod models;
 
 pub struct Config {
     pub api_key: String,
     pub api_secret: String,
 }
-pub struct AppState {
-    pub alpaca_client: Client,
-}
+
 #[derive(Debug, Serialize)]
 pub struct OrderResponse {
     pub id: String,

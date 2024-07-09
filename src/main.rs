@@ -1,20 +1,22 @@
 extern crate core;
 
+use crate::base::AppState;
 use crate::configuration::BaseConfig;
-use crate::handlers::{create_order, get_account};
-use apca::api::v2::account::{Account, GetError};
-use apca::{api::v2::account, ApiInfo, Client, RequestError};
+//use crate::handlers::{create_order, get_account};
 use axum::handler::Handler;
 use axum::routing::post;
 use axum::{routing::get, Router};
+use base::{ApiConfig, Client};
 use std::sync::Arc;
 use tokio::task::unconstrained;
 use tracing::instrument::WithSubscriber;
-use traidano::AppState;
+use crate::handlers::get_account;
+
 mod base;
 mod configuration;
 mod handlers;
 mod trade;
+
 
 #[tokio::main]
 async fn main() {
@@ -24,13 +26,20 @@ async fn main() {
     tracing::info!("App start");
     // connection to
     // configuration of api
-    let config = configuration::build_config().expect("cannot load configuration");
-    let api_config = config.api_config;
-    let api_config =
-        ApiInfo::from_parts(api_config.base_url, api_config.api_key, api_config.secret).unwrap();
+    // let config = configuration::build_config().expect("cannot load configuration");
+    // let api_config = config.api_config;
+    // let api_config =
+    //     ApiInfo::from_parts(api_config.base_url, api_config.api_key, api_config.secret).unwrap();
+
+    let api_config = ApiConfig {
+        base_url: "https://paper-api.alpaca.markets/v2/".to_string(),
+        steam_url: None,
+        api_key: "PKGA4DTIP5MZM8H0KQJL".to_string(),
+        secret_key: "bEBazJLr2BdbyKDLNMPQKrSxGzwELRBYGICg5Jh1".to_string(),
+    };
 
     // alpaca client
-    let client = Client::new(api_config);
+    let client = Client::builder().config(api_config).build().unwrap();
 
     // shared state
     let state = AppState {
@@ -42,6 +51,8 @@ async fn main() {
     let app = Router::new()
         .route("/account", get(get_account))
         .with_state(shared_state);
+
+
 
     // listener
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
