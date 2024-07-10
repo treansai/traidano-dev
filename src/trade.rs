@@ -1,8 +1,8 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 const ORDER_URL: &'static str = "https://";
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Side {
     #[serde(rename = "buy")]
     Buy,
@@ -10,12 +10,13 @@ pub enum Side {
     Sell,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Type {
+    #[serde(rename = "limit")]
     Limit,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TimeInForce {
     #[serde(rename = "day")]
     Day,
@@ -25,12 +26,13 @@ pub enum TimeInForce {
 }
 
 // Todo: Add stop loss and take profit and order class
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Order {
-    pub symbole: String,
+    pub symbol: String,
     pub qty: Option<i32>,
     pub national: Option<i32>,
     pub side: Side,
+    #[serde(rename = "type")]
     pub order_type: Type,
     pub time_in_force: TimeInForce,
     pub limit_price: Option<i32>,

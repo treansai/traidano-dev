@@ -5,6 +5,8 @@ use hyper_util::rt::TokioIo;
 use serde::de::DeserializeOwned;
 use std::error::Error;
 use axum::body::Body;
+use hyper_tls::HttpsConnector;
+use hyper_util::client::legacy::connect::HttpConnector;
 use serde::{Deserialize, Serialize};
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
@@ -59,51 +61,35 @@ impl Client {
         ClientBuilder::new()
     }
 
+
+
     pub async fn send<T>(&self, method: Method, path: &str, body: Body) -> Result<T, Box<dyn Error + Send + Sync>>
     where
-        T: DeserializeOwned,
+        T: DeserializeOwned
     {
+        use hyper_util::{client::legacy::Client, rt::TokioExecutor};
+        let https = HttpsConnector::new();
+        let client = Client::builder(TokioExecutor::new()).build(https);
+
         let mut full_url = self.api_config.base_url.clone();
         full_url.push_str(path);
 
-        let url = full_url.parse::<Uri>()?;
-
-        let host = url.host().expect("Url has no host");
-        let port = url.port_u16().unwrap_or(443); // Changed to 443 for HTTPS
-        let addr = format!("{}:{}", host, port);
-
-
-        let tls_connector = TlsConnector::new()?;
-
-        let tcp_stream = TcpStream::connect(addr).await?;
-        let tls_stream = tls_connector.connect(host, tcp_stream).unwrap();
-        let io = TokioIo::new(tls_stream);
-
-        let (mut sender, conn) = handshake(io).await?;
-        tokio::task::spawn(async move {
-            if let Err(err) = conn.await {
-                println!("Connection failed: {:?}", err);
-            }
-        });
-
         let req = Request::builder()
             .method(method)
-            .uri(&full_url) // Use the full URL here
-            .header("Host", host) // Add the Host header
+            .uri(&full_url)
+            .header("Content-Type", "application/json")
             .header("Accept", "application/json")
             .header("APCA-API-KEY-ID", &self.api_config.api_key)
             .header("APCA-API-SECRET-KEY", &self.api_config.secret_key)
-            .body(body)?; // Use the provided body
+            .body(body)?;
 
-        println!("Request: {:?}", req);
-        let res = sender.send_request(req).await?;
+        tracing::debug!("request  sed : {:?}", req);
+        let res = client.request(req).await?;
 
-        println!("Response: {}", res.status());
-        println!("Headers: {:#?}\n", res.headers());
+        tracing::debug!("Response status: {}", res.status());
+        tracing::debug!("Response: {:#?}\n", res);
 
         let body_bytes = res.into_body().collect().await.unwrap().to_bytes();
-        // Print the response body for debugging
-        println!("Response body: {:?}", String::from_utf8_lossy(&body_bytes));
         let response: T = serde_json::from_slice(&body_bytes)?;
 
         Ok(response)

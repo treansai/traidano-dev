@@ -4,13 +4,12 @@ use crate::base::AppState;
 use crate::configuration::BaseConfig;
 //use crate::handlers::{create_order, get_account};
 use axum::handler::Handler;
-use axum::routing::post;
-use axum::{routing::get, Router};
+use axum::{routing::get, routing::post, Router};
 use base::{ApiConfig, Client};
 use std::sync::Arc;
 use tokio::task::unconstrained;
 use tracing::instrument::WithSubscriber;
-use crate::handlers::get_account;
+use crate::handlers::{create_order, get_account};
 
 mod base;
 mod configuration;
@@ -50,6 +49,7 @@ async fn main() {
     // the app server
     let app = Router::new()
         .route("/account", get(get_account))
+        .route("/orders", post(create_order))
         .with_state(shared_state);
 
 

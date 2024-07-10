@@ -8,12 +8,13 @@ members = [".", "bots"]
 
 [dependencies]
 axum = { version = "0.7.5" }
+axum-macros = "0.4.1"
 bytes = "*"
 config = "0.14.0"
 env_logger = "0.11.3"
 log = "0.4.22"
-hyper = { version = "1.4.0", features = ["client"] }
-hyper-util = "0.1.6"
+hyper = { version = "1.4.0", features = ["full"] }
+hyper-util = { version = "0.1.6", features = ["client", "client-legacy"] }
 num-decimal = { version = "0.2.4", default-features = false, features = [
     "num-v04",
     "serde",
@@ -29,3 +30,4 @@ http-body-util = "0.1.2"
 tokio-rustls = "0.26.0"
 native-tls = "0.2.12"
 tokio-native-tls = "0.3.1"
+hyper-tls = "0.6.0"

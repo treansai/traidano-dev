@@ -1,23 +1,31 @@
+use std::collections::HashMap;
 use std::error::Error;
 use std::future::Future;
-use axum::{extract::State, http::StatusCode, Json};
+use std::os::macos::raw::stat;
+use axum::{extract::State, http::StatusCode, Json, response, serve};
 use num_decimal::num_rational::BigRational;
 use num_decimal::Num;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use axum::body::Body;
+use axum::extract::Path;
+use axum::http::Response;
 use axum::response::IntoResponse;
+use axum_macros::debug_handler;
 use hyper::Method;
+use serde_json::json;
 use thiserror::Error;
 use tracing::{error, info, instrument};
 use traidano::{OrderError, OrderResponse};
 use traidano::models::account::Account;
 use crate::base::AppState;
+use crate::trade::Order;
 
 #[instrument(skip(state))]
 pub(crate) async fn get_account(
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    tracing::info!("app_events: get account information");
     let response = state
         .alpaca_client
         .send::<serde_json::Value>(
@@ -32,9 +40,17 @@ pub(crate) async fn get_account(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
+    let account: Account = serde_json::from_value(response.clone())
+        .expect("error in deserialization");
+
+    tracing::info!(
+        account_id=?account.id,
+        "Retrieved account information"
+    );
+
+
     Ok(Json(response))
 }
-
 
 // /// Get Account information
 // #[instrument(skip(state))]
@@ -59,6 +75,61 @@ pub(crate) async fn get_account(
 //     }
 // }
 //
+
+/// Create order
+#[instrument(skip(state))]
+#[debug_handler]
+pub async fn create_order(
+    State(state): State<Arc<AppState>>,
+    Json(request): Json<Order>
+) -> response::Response {
+    info!("receive '{:?}' order", &request.side);
+
+    match state.alpaca_client
+        .send::<serde_json::Value>(
+            Method::POST,
+            "orders",
+            Body::from(serde_json::to_string(&request).unwrap())
+        )
+        .await
+    {
+        Ok(response) => {
+            info!("order created");
+            (StatusCode::OK, Json(response)).into_response()
+        }
+        Err(e) => {
+            error!("Error creating order: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "Failed to create order"}))).into_response()
+        }
+    }
+}
+
+#[debug_handler]
+#[instrument(skip(state))]
+pub async fn get_all_order(
+    Path(param) : Path<HashMap<String, String>>,
+    State(state): State<Arc<AppState>>
+) -> response::Response {
+    info!("get all order");
+
+    match state.alpaca_client.send::<serde_json::Value>(
+        Method::GET,
+        "orders",
+        Body::empty()
+    ).await {
+        Ok(response) => {
+            info!("order created");
+            (StatusCode::OK, Json(response)).into_response()
+        }
+        Err(e) => {
+            error!("Error creating order: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "Failed to create order"}))).into_response()
+        }
+    }
+}
+
+
+
 // #[instrument(skip(state), fields(symbol = %request.symbol, side = %request.side))]
 // pub async fn create_order(
 //     Json(request): Json<CreateOrderRequest>,
