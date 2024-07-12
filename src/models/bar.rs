@@ -12,3 +12,5 @@ pub struct Bar {
     pub volume: u32,
     pub wv: f32,
 }
+
+

@@ -1,4 +1,7 @@
 use chrono::{self, TimeZone, Utc};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Bar {
     pub close_price: f32,
     pub high_price: f32,
