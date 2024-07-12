@@ -9,7 +9,7 @@ use base::{ApiConfig, Client};
 use std::sync::Arc;
 use tokio::task::unconstrained;
 use tracing::instrument::WithSubscriber;
-use crate::handlers::{create_order, get_account};
+use crate::handlers::{create_order, get_account, get_all_order, get_params};
 
 mod base;
 mod configuration;
@@ -49,7 +49,7 @@ async fn main() {
     // the app server
     let app = Router::new()
         .route("/account", get(get_account))
-        .route("/orders", post(create_order))
+        .route("/orders", post(create_order).get(get_all_order))
         .with_state(shared_state);
 
 
