@@ -122,7 +122,7 @@ pub async fn get_all_order(
 ) -> response::Response {
     info!("get all order");
 
-    let mut url_query : String = "orders?".to_string();
+    let mut url_query: String = "orders?".to_string();
     url_query.push_str(&params.query());
 
     match state
@@ -143,4 +143,11 @@ pub async fn get_all_order(
                 .into_response()
         }
     }
+}
+
+pub async fn get_bars(
+    Query(params): Query<BarQueryParams>,
+    State(state): State<Arc<AppState>>,
+) -> response::Response {
+    todo!()
 }
