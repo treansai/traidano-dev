@@ -19,3 +19,6 @@ pub struct Bar {
     #[serde(rename = "wv")]
     pub wv: f32,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BarQueryParams {}

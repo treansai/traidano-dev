@@ -1,9 +1,3 @@
-use serde::{Deserialize, Serialize};
-
-pub enum TradingStrategy {
-    MeanReversion,
-}
-
 #[derive(Deserialize, Serialize)]
 pub struct TradingConfig {
     pub trading_strategy: TradingConfig,

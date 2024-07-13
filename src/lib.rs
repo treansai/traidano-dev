@@ -5,6 +5,7 @@ use base::Client;
 
 mod base;
 pub mod models;
+mod bot;
 
 pub struct Config {
     pub api_key: String,
