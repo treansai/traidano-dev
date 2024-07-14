@@ -2,7 +2,6 @@ extern crate core;
 
 use crate::base::AppState;
 use crate::configuration::BaseConfig;
-//use crate::handlers::{create_order, get_account};
 use axum::handler::Handler;
 use axum::{routing::get, routing::post, Router};
 use base::{ApiConfig, Client};
@@ -15,7 +14,7 @@ mod base;
 mod configuration;
 mod handlers;
 mod trade;
-
+mod handler;
 
 #[tokio::main]
 async fn main() {

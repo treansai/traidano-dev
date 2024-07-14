@@ -1,4 +1,5 @@
 pub mod account;
 pub mod order;
-mod bar;
-mod position;
+pub mod bar;
+pub mod position;
+pub mod trade;

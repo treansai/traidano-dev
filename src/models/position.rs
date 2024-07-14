@@ -1,3 +1,1 @@
-pub struct Position {
-    pub
-}
+pub struct Position {}
