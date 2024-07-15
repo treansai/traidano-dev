@@ -1,9 +1,10 @@
-mod stategies;
+mod strategies;
+pub mod bot_manager;
 
 use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use crate::base::AppState;
-use crate::bot::stategies::mean_reversion::mean_reversion_strategy;
+use crate::bot::strategies::mean_reversion::mean_reversion_strategy;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum BotStrategy {
@@ -11,6 +12,7 @@ pub enum BotStrategy {
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct BotConfig {
+    pub id: String,
     pub trading_strategy: BotStrategy,
     pub symbols: Vec<String>,
     pub lookback: usize,

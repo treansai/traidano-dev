@@ -1,14 +1,17 @@
 extern crate core;
 
-use crate::base::AppState;
+use crate::base::{AppState, RateLimiter};
 use crate::configuration::BaseConfig;
 use axum::handler::Handler;
-use axum::{routing::get, routing::post, Router};
+use axum::{routing::get, routing::post, Router, ServiceExt};
 use base::{ApiConfig, Client};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
+use axum::routing::delete;
 use tokio::task::unconstrained;
 use tracing::instrument::WithSubscriber;
-use crate::handlers::{create_order, get_account, get_all_order, get_params};
+use traidano::bot::bot_manager::BotManager;
+use crate::handler::{create_order, get_account, get_all_order};
+use crate::handlers::bot::{create_bot, get_bot, get_bots, remove_bot, stop_bot};
 
 mod base;
 mod configuration;
@@ -42,13 +45,21 @@ async fn main() {
     // shared state
     let state = AppState {
         alpaca_client: client,
+        bot_manager: Mutex::new(BotManager::new()),
+        rate_limiter: Arc::new(Mutex::new(RateLimiter{}))
     };
     let shared_state = Arc::new(state);
 
     // the app server
     let app = Router::new()
+        // account
         .route("/account", get(get_account))
+        // orders
         .route("/orders", post(create_order).get(get_all_order))
+        // bot manager
+        .route("/bots", post(create_bot).get(get_bots))
+        .route("/bots/:id", get(get_bot).delete(remove_bot))
+        .route("/bots/:id/stop", post(stop_bot))
         .with_state(shared_state);
 
 
@@ -58,5 +69,5 @@ async fn main() {
         .await
         .unwrap();
 
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app.into_make_service()).await.unwrap();
 }

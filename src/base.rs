@@ -4,6 +4,7 @@ use hyper::{client::conn::http1::handshake, Method, Request, Uri};
 use hyper_util::rt::TokioIo;
 use serde::de::DeserializeOwned;
 use std::error::Error;
+use std::sync::{Arc, Mutex};
 use axum::body::Body;
 use hyper_tls::HttpsConnector;
 use hyper_util::client::legacy::connect::HttpConnector;
@@ -11,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use native_tls::TlsConnector;
+use traidano::bot::bot_manager::BotManager;
 
 #[derive(Debug)]
 pub struct ClientBuildError;
@@ -27,6 +29,7 @@ pub struct ApiConfig {
 
 pub struct Client {
     pub api_config: ApiConfig,
+
 }
 
 pub struct ClientBuilder {
@@ -98,8 +101,12 @@ impl Client {
 
 }
 
+pub struct RateLimiter {}
+
 pub struct AppState {
     pub alpaca_client: Client,
+    pub bot_manager: Mutex<BotManager>,
+    pub rate_limiter: Arc<Mutex<RateLimiter>>
 }
 
 
