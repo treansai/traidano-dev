@@ -1,1 +1,1 @@
-mod rate_limit;
+mod rate_limiter;
