@@ -1,11 +1,11 @@
 use axum::http::StatusCode;
+use base::Client;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use base::Client;
 
 mod base;
-pub mod models;
 pub mod bot;
+pub mod models;
 
 pub struct Config {
     pub api_key: String,

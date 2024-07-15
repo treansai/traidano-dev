@@ -1,21 +1,21 @@
-use std::collections::HashMap;
-use std::sync::Arc;
 use crate::base::AppState;
 use crate::bot::{Bot, BotConfig};
+use std::collections::HashMap;
+use std::sync::Arc;
 
 pub struct BotManager {
-    pub bots : HashMap<String, Bot>,
+    pub bots: HashMap<String, Bot>,
 }
 
 impl BotManager {
     pub fn new() -> Self {
         BotManager {
-            bots : HashMap::new()
+            bots: HashMap::new(),
         }
     }
 
     /// Create new bot to a manager
-    pub async fn create_bot(&mut self, config: BotConfig, app_state: Arc<AppState>)  {
+    pub async fn create_bot(&mut self, config: BotConfig, app_state: Arc<AppState>) {
         let mut bot = Bot::new(config.clone());
         bot.start(app_state).await;
         self.bots.insert(config.id.clone(), bot);
@@ -32,5 +32,4 @@ impl BotManager {
             bot.stop().await;
         }
     }
-
 }

@@ -1,17 +1,17 @@
+use axum::body::Body;
 use bytes::Bytes;
 use http_body_util::{BodyExt, Empty};
 use hyper::{client::conn::http1::handshake, Method, Request, Uri};
-use hyper_util::rt::TokioIo;
-use serde::de::DeserializeOwned;
-use std::error::Error;
-use std::sync::{Arc, Mutex};
-use axum::body::Body;
 use hyper_tls::HttpsConnector;
 use hyper_util::client::legacy::connect::HttpConnector;
+use hyper_util::rt::TokioIo;
+use native_tls::TlsConnector;
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use std::error::Error;
+use std::sync::{Arc, Mutex};
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
-use native_tls::TlsConnector;
 use traidano::bot::bot_manager::BotManager;
 
 #[derive(Debug)]
@@ -29,7 +29,6 @@ pub struct ApiConfig {
 
 pub struct Client {
     pub api_config: ApiConfig,
-
 }
 
 pub struct ClientBuilder {
@@ -64,11 +63,14 @@ impl Client {
         ClientBuilder::new()
     }
 
-
-
-    pub async fn send<T>(&self, method: Method, path: &str, body: Body) -> Result<T, Box<dyn Error + Send + Sync>>
+    pub async fn send<T>(
+        &self,
+        method: Method,
+        path: &str,
+        body: Body,
+    ) -> Result<T, Box<dyn Error + Send + Sync>>
     where
-        T: DeserializeOwned
+        T: DeserializeOwned,
     {
         use hyper_util::{client::legacy::Client, rt::TokioExecutor};
         let https = HttpsConnector::new();
@@ -97,8 +99,6 @@ impl Client {
 
         Ok(response)
     }
-
-
 }
 
 pub struct RateLimiter {}
@@ -106,9 +106,8 @@ pub struct RateLimiter {}
 pub struct AppState {
     pub alpaca_client: Client,
     pub bot_manager: Mutex<BotManager>,
-    pub rate_limiter: Arc<Mutex<RateLimiter>>
+    pub rate_limiter: Arc<Mutex<RateLimiter>>,
 }
-
 
 #[cfg(test)]
 mod tests {

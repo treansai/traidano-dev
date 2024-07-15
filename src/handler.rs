@@ -19,9 +19,9 @@ use std::sync::Arc;
 use thiserror::Error;
 use tracing::{error, info, instrument};
 use traidano::models::account::Account;
+use traidano::models::bar::BarQueryParams;
 use traidano::models::order::{Order, OrderParams};
 use traidano::{OrderError, OrderResponse};
-use traidano::models::bar::BarQueryParams;
 
 #[instrument(skip(state))]
 pub(crate) async fn get_account(
@@ -151,17 +151,4 @@ pub async fn get_bars(
     State(state): State<Arc<AppState>>,
 ) -> response::Response {
     todo!()
-}
-
-pub async fn is_market_open(
-    client: &Client
-) -> Result<bool, Box<dyn std::error::Error>> {
-    let clock : serde_json::Value = client
-        .send(
-            Method::GET,
-            "clock",
-            Body::empty()
-        ).await?;
-
-    Ok(clock["is_open"].as_bool().unwrap())
 }

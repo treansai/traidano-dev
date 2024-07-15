@@ -1,12 +1,12 @@
+use serde::{Deserialize, Serialize};
 use std::any::Any;
 use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
 use tokio_rustls::rustls::Side;
 use tracing_subscriber::util::SubscriberInitExt;
 
 pub enum AnyValue {
     U32(Option<u32>),
-    Str(Option<String>)
+    Str(Option<String>),
 }
 
 // Todo: Add stop loss and take profit and order class
@@ -27,7 +27,6 @@ pub struct Order {
     pub client_order_id: Option<String>,
 }
 
-
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct OrderParams {
     pub status: Option<String>,
@@ -45,13 +44,13 @@ impl OrderParams {
         let query_map = self.to_hash_map();
 
         for key in query_map.keys() {
-            match  query_map.get(key) {
-                Some(AnyValue::Str(Some(str_value))) => query.push(
-                    format!("{}={}", key, str_value)
-                ),
-                Some(AnyValue::U32(Some(u_value))) => query.push(
-                    format!("{}={}", key, u_value.to_string())
-                ),
+            match query_map.get(key) {
+                Some(AnyValue::Str(Some(str_value))) => {
+                    query.push(format!("{}={}", key, str_value))
+                }
+                Some(AnyValue::U32(Some(u_value))) => {
+                    query.push(format!("{}={}", key, u_value.to_string()))
+                }
                 _ => {}
             }
         }
@@ -81,7 +80,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_query_map(){
+    fn test_query_map() {
         let params = OrderParams {
             status: Some("param1".to_string()),
             limit: Some(3_u32),
@@ -91,6 +90,5 @@ mod tests {
         let query = params.query();
 
         assert_eq!(query, "limit=3&status=param1".to_string())
-
     }
 }

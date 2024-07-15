@@ -23,4 +23,3 @@ pub enum TimeInForce {
     #[serde(rename = "gtc")]
     GoodUntilCancel,
 }
-
