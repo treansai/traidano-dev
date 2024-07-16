@@ -142,9 +142,10 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                             }
                         }
                     }
+                } else {
+                    tracing::info!("Market is closed. Waiting for next check.");
                 }
             }
         }
     }
-    todo!()
 }
