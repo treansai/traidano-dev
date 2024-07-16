@@ -1,7 +1,7 @@
+use crate::models::trade::{Side, TimeInForce, Type};
 use serde::{Deserialize, Serialize};
 use std::any::Any;
 use std::collections::HashMap;
-use tokio_rustls::rustls::Side;
 use tracing_subscriber::util::SubscriberInitExt;
 
 pub enum AnyValue {
@@ -10,7 +10,7 @@ pub enum AnyValue {
 }
 
 // Todo: Add stop loss and take profit and order class
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Order {
     pub symbol: String,
     pub qty: Option<i32>,

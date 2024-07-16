@@ -5,6 +5,8 @@ use thiserror::Error;
 
 mod base;
 pub mod bot;
+pub mod core;
+pub mod handlers;
 pub mod models;
 
 pub struct Config {

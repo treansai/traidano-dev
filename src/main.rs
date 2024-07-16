@@ -13,10 +13,10 @@ use traidano::bot::bot_manager::BotManager;
 
 mod base;
 mod configuration;
+pub mod core;
 mod handler;
-mod handlers;
+pub mod handlers;
 mod trade;
-mod core;
 
 #[tokio::main]
 async fn main() {

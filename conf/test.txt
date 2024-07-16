@@ -1,0 +1,23 @@
+// Implement YAML config loading
+use std::fs::File;
+use std::io::Read;
+use serde_yaml;
+
+fn load_config_from_yaml(path: &str) -> Result<BotConfig, Box<dyn std::error::Error>> {
+    let mut file = File::open(path)?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+    let config: BotConfig = serde_yaml::from_str(&contents)?;
+    Ok(config)
+}
+
+// You can call this function from a bash script
+fn create_bot_from_yaml(path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let config = load_config_from_yaml(path)?;
+
+    // You would need to set up a simple HTTP client here to post to your /bots endpoint
+    // For simplicity, let's just print the config
+    println!("Bot config loaded: {:?}", config);
+
+    Ok(())
+}

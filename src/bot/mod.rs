@@ -29,6 +29,8 @@ pub struct BotConfig {
     pub risk_per_trade: f64,
     pub max_position: usize,
     pub timeframes: Vec<String>,
+    pub volatility_window: usize,
+    pub volatility_threshold: f64,
 }
 
 pub struct Bot {

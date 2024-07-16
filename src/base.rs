@@ -1,3 +1,4 @@
+use crate::core::rate_limiter::RateLimiter;
 use axum::body::Body;
 use bytes::Bytes;
 use http_body_util::{BodyExt, Empty};
@@ -13,7 +14,6 @@ use std::sync::{Arc, Mutex};
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use traidano::bot::bot_manager::BotManager;
-use crate::core::rate_limiter::RateLimiter;
 
 #[derive(Debug)]
 pub struct ClientBuildError;
@@ -101,7 +101,6 @@ impl Client {
         Ok(response)
     }
 }
-
 
 pub struct AppState {
     pub alpaca_client: Client,

@@ -4,12 +4,12 @@ use tokio::time::Instant;
 pub struct RateLimiter {
     pub tokens: f64,
     pub last_refill: Instant,
-    pub rate : f64,
-    pub capacity: f64
+    pub rate: f64,
+    pub capacity: f64,
 }
 
 impl RateLimiter {
-    pub fn new(rate: f64, capacity:f64) -> Self {
+    pub fn new(rate: f64, capacity: f64) -> Self {
         Self {
             tokens: capacity,
             last_refill: Instant::now(),
