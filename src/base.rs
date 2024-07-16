@@ -13,6 +13,7 @@ use std::sync::{Arc, Mutex};
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use traidano::bot::bot_manager::BotManager;
+use crate::core::rate_limiter::RateLimiter;
 
 #[derive(Debug)]
 pub struct ClientBuildError;
@@ -101,7 +102,6 @@ impl Client {
     }
 }
 
-pub struct RateLimiter {}
 
 pub struct AppState {
     pub alpaca_client: Client,

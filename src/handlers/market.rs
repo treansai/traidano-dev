@@ -3,6 +3,7 @@ use axum::extract::State;
 use std::sync::Arc;
 
 pub async fn get_positions(State(state): State<Arc<AppState>>) {
+
     todo!()
 }
 
