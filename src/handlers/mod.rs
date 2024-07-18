@@ -1,7 +1,9 @@
-use crate::base::{AppState, Client, RateLimiter};
+use crate::base::{AppState, Client};
+use crate::error::{Error, RequestError};
 use axum::body::Body;
-use axum::http::Method;
-use serde::de::DeserializeOwned;
+use axum::http::{Method, StatusCode};
+use axum::response::{IntoResponse, Response};
+use serde::de::{DeserializeOwned, StdError};
 use std::sync::{Arc, Mutex};
 
 pub mod account;
@@ -15,10 +17,31 @@ pub async fn rate_limited_request<T>(
     method: Method,
     path: &str,
     body: Body,
-) -> Result<T, Box<dyn std::error::Error>>
+) -> Result<T, RequestError>
 where
     T: DeserializeOwned,
 {
-    app_state.rate_limiter.lock().unwrap().acquire().await;
-    app_state.alpaca_client.send::<T>(method, path, body)
+    // Acquire the rate limiter lock
+    let mut guard = app_state.rate_limiter.lock().await;
+    guard.acquire().await;
+
+    drop(guard);
+
+    // Send the request using the Alpaca client
+    app_state.alpaca_client.send::<T>(method, path, body).await
+}
+
+impl IntoResponse for RequestError {
+    fn into_response(self) -> Response {
+        let (status, error_message) = match self {
+            RequestError::Hyper(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+            RequestError::HttpBuild(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+            RequestError::Json(e) => (StatusCode::BAD_REQUEST, e.to_string()),
+            RequestError::ApiError(status) => (status, "API Error".to_string()),
+            // Add other variants as needed
+            _ => (StatusCode::NOT_FOUND, "NotFound".to_string()),
+        };
+
+        (status, error_message).into_response()
+    }
 }

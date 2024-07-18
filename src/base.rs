@@ -1,4 +1,7 @@
+use crate::bot::bot_manager::BotManager;
 use crate::core::rate_limiter::RateLimiter;
+use crate::error::Error;
+use crate::error::RequestError;
 use axum::body::Body;
 use bytes::Bytes;
 use http_body_util::{BodyExt, Empty};
@@ -9,11 +12,10 @@ use hyper_util::rt::TokioIo;
 use native_tls::TlsConnector;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-use std::error::Error;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
-use traidano::bot::bot_manager::BotManager;
+use tokio::sync::Mutex;
 
 #[derive(Debug)]
 pub struct ClientBuildError;
@@ -64,12 +66,7 @@ impl Client {
         ClientBuilder::new()
     }
 
-    pub async fn send<T>(
-        &self,
-        method: Method,
-        path: &str,
-        body: Body,
-    ) -> Result<T, Box<dyn Error + Send + Sync>>
+    pub async fn send<T>(&self, method: Method, path: &str, body: Body) -> Result<T, RequestError>
     where
         T: DeserializeOwned,
     {
@@ -87,18 +84,32 @@ impl Client {
             .header("Accept", "application/json")
             .header("APCA-API-KEY-ID", &self.api_config.api_key)
             .header("APCA-API-SECRET-KEY", &self.api_config.secret_key)
-            .body(body)?;
+            .body(body)
+            .map_err(RequestError::HttpBuild)?;
 
-        tracing::debug!("request  sed : {:?}", req);
-        let res = client.request(req).await?;
+        tracing::debug!("request  send : {:?}", req);
+        let res = client
+            .request(req)
+            .await
+            .map_err(RequestError::LegacyHyper)?;
 
         tracing::debug!("Response status: {}", res.status());
         tracing::debug!("Response: {:#?}\n", res);
 
-        let body_bytes = res.into_body().collect().await.unwrap().to_bytes();
-        let response: T = serde_json::from_slice(&body_bytes)?;
+        if res.status().is_success() {
+            let body_bytes = res
+                .into_body()
+                .collect()
+                .await
+                .map_err(RequestError::Hyper)?
+                .to_bytes();
 
-        Ok(response)
+            let response: T = serde_json::from_slice(&body_bytes)
+                .map_err(|e| RequestError::Json(Error::Json(e)))?;
+            Ok(response)
+        } else {
+            Err(RequestError::ApiError(res.status()))
+        }
     }
 }
 

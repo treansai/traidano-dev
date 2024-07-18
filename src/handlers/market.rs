@@ -1,16 +1,26 @@
 use crate::base::AppState;
+use crate::error::{Error, RequestError};
 use crate::handlers::rate_limited_request;
+use crate::models::position::Position;
+use crate::models::Clock;
 use axum::body::Body;
 use axum::extract::State;
 use axum::http::Method;
 use std::sync::Arc;
-use traidano::models::position::Position;
 
-pub async fn get_positions(state: &AppState) -> Result<Vec<Position>, Box<dyn std::error::Error>> {
-    rate_limited_request(state, Method::GET, "positions", Body::empty())
+pub async fn get_positions(state: &AppState) -> Result<Vec<Position>, RequestError> {
+    match rate_limited_request::<Vec<Position>>(state, Method::GET, "positions", Body::empty())
+        .await
+    {
+        Ok(positions) => Ok(positions),
+        Err(e) => {
+            tracing::error!("Cannot get positions: {}", e);
+            Err(e)
+        }
+    }
 }
 
-pub async fn is_market_open(state: &AppState) -> Result<bool, Box<dyn std::error::Error>> {
-    let clock: serde_json::Value = rate_limited_request(state, Method::GET, "clock", Body::empty());
-    Ok(clock["is_open"].as_bool().unwrap_or(false))
+pub async fn is_market_open(state: &AppState) -> Result<bool, RequestError> {
+    let clock = rate_limited_request::<Clock>(state, Method::GET, "clock", Body::empty()).await?;
+    Ok(clock.is_open)
 }

@@ -4,7 +4,7 @@ use axum::body::Body;
 use axum::http::Method;
 use std::collections::HashMap;
 
-use traidano::models::bar::Bar;
+use crate::models::bar::Bar;
 
 pub async fn get_bars(
     state: &AppState,
@@ -14,8 +14,9 @@ pub async fn get_bars(
 ) -> Result<HashMap<String, Vec<Bar>>, Box<dyn std::error::Error>> {
     let symbols_str = symbols.join(",");
     let path = format!("bars/{}?symbols={}&limit={}", timeframe, symbols_str, limit);
-    let bars: serde_json::Value =
-        rate_limited_request(state, Method::GET, &path, Body::empty()).await?;
+    let bars: serde_json::Value = rate_limited_request(state, Method::GET, &path, Body::empty())
+        .await
+        .unwrap();
     let mut result = HashMap::new();
     for symbol in symbols {
         result.insert(

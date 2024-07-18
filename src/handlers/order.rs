@@ -1,4 +1,5 @@
 use crate::base::AppState;
+use crate::models::order::{Order, OrderParams};
 use axum::body::Body;
 use axum::extract::{Query, State};
 use axum::http::{Method, StatusCode};
@@ -8,7 +9,6 @@ use axum_macros::debug_handler;
 use serde_json::json;
 use std::sync::Arc;
 use tracing::{error, info, instrument};
-use traidano::models::order::{Order, OrderParams};
 
 #[instrument(skip(state))]
 #[debug_handler]

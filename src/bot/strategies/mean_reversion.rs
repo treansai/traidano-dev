@@ -1,10 +1,10 @@
 use crate::base::AppState;
-use crate::bot::{is_market_open, BotConfig, MarketType};
+use crate::bot::{BotConfig, MarketType};
 use crate::core::functions::calculate_position_size;
 use crate::handlers::account;
 use crate::handlers::account::get_account;
 use crate::handlers::bar::get_bars;
-use crate::handlers::market::get_positions;
+use crate::handlers::market::{get_positions, is_market_open};
 use crate::handlers::order::create_order;
 use crate::models::order::Order;
 use crate::models::trade::{Side, TimeInForce, Type};
@@ -29,7 +29,7 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
             MarketType::Equity => {
                 // Todo: evoid app orther than handler to communicate with alcapa api
                 // todo: change is_open_market to handler ang get bars
-                if let Ok(true) = is_market_open(&state.alpaca_client, &state.rate_limiter).await {
+                if let Ok(true) = is_market_open(&state).await {
                     let mut all_signals = HashMap::new();
 
                     for timeframe in &config.timeframes {
@@ -68,7 +68,7 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                                     all_signals
                                         .entry(symbol.clone())
                                         .and_modify(|e: &mut i32| *e += signal)
-                                        .or_insert(signal)
+                                        .or_insert(signal);
                                 }
                             }
                             Err(e) => tracing::error!(
@@ -79,10 +79,10 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                         }
                     }
                     // get account
-                    let account = get_account(&state).await?;
+                    let account = get_account(&state).await.unwrap();
 
                     // get position
-                    let positions = get_positions(state.as_ref()).await?;
+                    let positions = get_positions(state.as_ref()).await.unwrap();
 
                     let current_positions: HashMap<String, f64> =
                         positions.into_iter().map(|p| (p.symbol, p.qty)).collect();
@@ -118,7 +118,7 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                                     let order = Order {
                                         symbol: symbol.clone(),
                                         qty: Some(qty as i32),
-                                        side,
+                                        side: side.clone(),
                                         order_type: Type::Limit,
                                         time_in_force: TimeInForce::Day,
                                         limit_price: Some(if side == Side::Buy {
@@ -129,21 +129,20 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                                         ..Order::default()
                                     };
 
-                                    match create_order(State(state.clone()), Json(order)) {
-                                        Ok(_) => tracing::info!(
-                                            "Order placed: {:?} {} shares of {}",
-                                            side,
-                                            qty,
-                                            symbol
-                                        ),
-                                        Err(e) => tracing::error!("Failed to place order: {:?}", e),
-                                    }
+                                    create_order(State(state.clone()), Json(order)).await;
+                                    tracing::info!(
+                                        "Order placed: {:?} {} shares of {}",
+                                        side,
+                                        qty,
+                                        symbol
+                                    );
                                 }
                             }
                         }
                     }
                 } else {
                     tracing::info!("Market is closed. Waiting for next check.");
+                    tokio::time::sleep(Duration::from_secs(3600)).await;
                 }
             }
         }

@@ -1,8 +1,9 @@
 pub mod bot_manager;
 mod strategies;
 
-use crate::base::{AppState, Client, RateLimiter};
+use crate::base::{AppState, Client};
 use crate::bot::strategies::mean_reversion::mean_reversion_strategy;
+use crate::core::rate_limiter::RateLimiter;
 use axum::body::Body;
 use axum::http::Method;
 use serde::{Deserialize, Serialize};
@@ -27,15 +28,15 @@ pub struct BotConfig {
     pub lookback: usize,
     pub threshold: f64,
     pub risk_per_trade: f64,
-    pub max_position: usize,
+    pub max_positions: usize,
     pub timeframes: Vec<String>,
     pub volatility_window: usize,
     pub volatility_threshold: f64,
 }
 
 pub struct Bot {
-    config: BotConfig,
-    handle: Option<tokio::task::JoinHandle<()>>,
+    pub config: BotConfig,
+    pub handle: Option<tokio::task::JoinHandle<()>>,
 }
 
 impl Bot {
@@ -64,11 +65,17 @@ impl Bot {
     }
 }
 
-pub async fn is_market_open(
-    client: &Client,
-    rate_limiter: &Arc<Mutex<RateLimiter>>,
-) -> Result<bool, Box<dyn std::error::Error>> {
-    let clock: serde_json::Value = client.send(Method::GET, "clock", Body::empty()).await?;
+#[derive(Debug, Clone, Serialize)]
+pub struct BotInfo {
+    pub config: BotConfig,
+    pub is_running: bool,
+}
 
-    Ok(clock["is_open"].as_bool().unwrap())
+impl From<&Bot> for BotInfo {
+    fn from(bot: &Bot) -> Self {
+        BotInfo {
+            config: bot.config.clone(),
+            is_running: bot.handle.is_some(),
+        }
+    }
 }

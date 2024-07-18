@@ -1,4 +1,4 @@
-use traidano::models::account::Account;
+use crate::models::account::Account;
 
 pub fn calculate_position_size(account: &Account, current_price: f64, risk_per_trade: f64) -> f64 {
     let risk_amount = account.equity * risk_per_trade;
