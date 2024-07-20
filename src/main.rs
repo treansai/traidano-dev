@@ -5,10 +5,12 @@ use crate::core::rate_limiter::RateLimiter;
 use crate::handlers::account::{get_account, get_http_account};
 use crate::handlers::bot::{create_bot, get_bot, get_bots, remove_bot, stop_bot};
 use crate::handlers::order::{create_order, get_all_order};
+use anyhow::Context;
 use axum::handler::Handler;
 use axum::routing::delete;
 use axum::{routing::get, routing::post, Router, ServiceExt};
 use base::{ApiConfig, Client};
+use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::task::unconstrained;
@@ -18,6 +20,7 @@ pub mod base;
 pub mod bot;
 mod configuration;
 pub mod core;
+pub mod dao;
 pub mod error;
 pub mod handler;
 pub mod handlers;
@@ -47,9 +50,17 @@ async fn main() {
     // alpaca client
     let client = Client::builder().config(api_config).build().unwrap();
 
+    // postgres pool
+    let db = PgPoolOptions::new()
+        .max_connections(20)
+        .connect("postgresql://postgres:postgres@localhost:5432/postgres")
+        .await
+        .unwrap();
+
     // shared state
     let state = AppState {
         alpaca_client: client,
+        db,
         bot_manager: Mutex::new(BotManager::new()),
         rate_limiter: Arc::new(Mutex::new(RateLimiter::new(200.0 / 60.0, 50.0))),
     };

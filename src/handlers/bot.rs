@@ -1,5 +1,6 @@
 use crate::base::AppState;
 use crate::bot::{Bot, BotConfig, BotInfo};
+use crate::dao;
 use crate::error::Error;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
@@ -8,16 +9,38 @@ use axum::Json;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Arc;
+use uuid::Uuid;
 
 pub async fn create_bot(
     State(state): State<Arc<AppState>>,
-    Json(config): Json<BotConfig>,
+    Json(mut config): Json<BotConfig>,
 ) -> impl IntoResponse {
     tracing::info!("Create bot request");
-    let mut bot_manager = state.bot_manager.lock().await;
-    bot_manager.create_bot(config.clone(), state.clone()).await;
-    tracing::info!("Bot {} created", config.clone().id);
-    (StatusCode::CREATED, Json(config))
+
+    // Generate a new UUID for the bot if not provided
+    if config.id.is_empty() {
+        config.id = Uuid::new_v4().to_string();
+    }
+
+    match dao::bot::create_bot(state.db.clone(), config.clone()).await {
+        Ok(bot_id) => {
+            tracing::debug!("Bot {} saved to database", bot_id);
+
+            let mut bot_manager = state.bot_manager.lock().await;
+
+            bot_manager.create_bot(config.clone(), state.clone()).await;
+            tracing::info!("Bot {} created", bot_id);
+            (StatusCode::CREATED, Json(config)).into_response()
+        }
+        Err(e) => {
+            tracing::error!("Failed to create bot in database: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to create bot in database",
+            )
+                .into_response()
+        }
+    }
 }
 
 pub async fn stop_bot(

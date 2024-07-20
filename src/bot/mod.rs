@@ -1,6 +1,8 @@
 pub mod bot_manager;
 mod strategies;
 
+use std::fmt;
+use std::fmt::{Formatter, write};
 use crate::base::{AppState, Client};
 use crate::bot::strategies::mean_reversion::mean_reversion_strategy;
 use crate::core::rate_limiter::RateLimiter;
@@ -14,14 +16,32 @@ pub enum BotStrategy {
     MeanReversion,
 }
 
+impl fmt::Display for BotStrategy{
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match *self {
+            BotStrategy::MeanReversion => write!(f, "MeanReversion")
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum MarketType {
     Crypto,
     Equity,
 }
+
+impl fmt::Display for MarketType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+       match *self {
+           MarketType::Equity => write!(f, "Equity"),
+           MarketType::Crypto => write!(f, "Crypto")
+       }
+    }
+}
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct BotConfig {
     pub id: String,
+    pub name: String,
     pub market: MarketType,
     pub trading_strategy: BotStrategy,
     pub symbols: Vec<String>,

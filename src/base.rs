@@ -12,6 +12,7 @@ use hyper_util::rt::TokioIo;
 use native_tls::TlsConnector;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 use std::sync::Arc;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
@@ -115,6 +116,7 @@ impl Client {
 
 pub struct AppState {
     pub alpaca_client: Client,
+    pub db: PgPool,
     pub bot_manager: Mutex<BotManager>,
     pub rate_limiter: Arc<Mutex<RateLimiter>>,
 }

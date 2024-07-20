@@ -7,13 +7,13 @@ use axum::extract::State;
 use axum::http::{Method, StatusCode};
 use axum::response::IntoResponse;
 use axum::Json;
-use std::sync::Arc;
 use serde::de::DeserializeOwned;
+use std::sync::Arc;
 use tracing::instrument;
 
 async fn rate_limited_get_account<T>(state: &Arc<AppState>) -> Result<T, RequestError>
 where
-    T: DeserializeOwned
+    T: DeserializeOwned,
 {
     rate_limited_request::<T>(state, Method::GET, "account", Body::empty()).await
 }
@@ -38,11 +38,10 @@ pub async fn get_http_account(State(state): State<Arc<AppState>>) -> impl IntoRe
                 "Retrieved account information"
             );
             Json(account).into_response()
-        },
+        }
         Err(e) => {
-         tracing::error!("Cannot get account information {}", e.to_string());
+            tracing::error!("Cannot get account information {}", e.to_string());
             e.into_response()
         }
-
     }
 }

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use serde_this_or_that::{as_f64};
+use serde_this_or_that::as_f64;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Account {

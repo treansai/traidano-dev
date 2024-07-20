@@ -3,6 +3,7 @@ use hyper::http::Error as HttpError;
 use hyper::Error as HyperError;
 use hyper_util::client::legacy::Error as LegacyHyperError;
 use serde_json::Error as JsonError;
+use sqlx::Error as DataBaseError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -29,8 +30,9 @@ pub enum Error {
     Json(#[from] JsonError),
 
     // Add other error types as needed
-    // #[error("Database error: {0}")]
-    // Database(#[from] DatabaseError),
+    #[error("Database error: {0}")]
+    Database(#[from] DataBaseError),
+
     #[error("Failed to acquire lock")]
     LockError,
     #[error("Bot not found")]
