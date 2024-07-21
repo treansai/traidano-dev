@@ -57,14 +57,18 @@ async fn main() {
         .await
         .unwrap();
 
+    let mut bot_manager = BotManager::new();
+
     // shared state
     let state = AppState {
         alpaca_client: client,
-        db,
-        bot_manager: Mutex::new(BotManager::new()),
+        db: db.clone(),
+        bot_manager: Mutex::new(bot_manager),
         rate_limiter: Arc::new(Mutex::new(RateLimiter::new(200.0 / 60.0, 50.0))),
     };
+
     let shared_state = Arc::new(state);
+    shared_state.bot_manager.lock().await.init(&db, shared_state.clone()).await;
 
     // the app server
     let app = Router::new()

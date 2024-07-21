@@ -1,6 +1,7 @@
 use crate::base::AppState;
 use crate::bot::{Bot, BotConfig, BotInfo};
 use crate::dao;
+use crate::dao::bot::get_all_running_bot;
 use crate::error::Error;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
@@ -18,11 +19,9 @@ pub async fn create_bot(
     tracing::info!("Create bot request");
 
     // Generate a new UUID for the bot if not provided
-    if config.id.is_empty() {
-        config.id = Uuid::new_v4().to_string();
-    }
+    config.id = Uuid::new_v4().to_string();
 
-    match dao::bot::create_bot(state.db.clone(), config.clone()).await {
+    match dao::bot::create_bot(&state.db.clone(), config.clone()).await {
         Ok(bot_id) => {
             tracing::debug!("Bot {} saved to database", bot_id);
 

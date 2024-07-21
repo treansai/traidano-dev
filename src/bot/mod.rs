@@ -1,14 +1,15 @@
 pub mod bot_manager;
 mod strategies;
 
-use std::fmt;
-use std::fmt::{Formatter, write};
 use crate::base::{AppState, Client};
 use crate::bot::strategies::mean_reversion::mean_reversion_strategy;
 use crate::core::rate_limiter::RateLimiter;
 use axum::body::Body;
 use axum::http::Method;
 use serde::{Deserialize, Serialize};
+use std::fmt;
+use std::fmt::{write, Formatter};
+use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -16,10 +17,21 @@ pub enum BotStrategy {
     MeanReversion,
 }
 
-impl fmt::Display for BotStrategy{
+impl fmt::Display for BotStrategy {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match *self {
-            BotStrategy::MeanReversion => write!(f, "MeanReversion")
+            BotStrategy::MeanReversion => write!(f, "MeanReversion"),
+        }
+    }
+}
+
+impl FromStr for BotStrategy {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "MeanReversion" => Ok(BotStrategy::MeanReversion),
+            _ => Err(()),
         }
     }
 }
@@ -29,13 +41,23 @@ pub enum MarketType {
     Crypto,
     Equity,
 }
+impl FromStr for MarketType {
+    type Err = ();
 
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "Crypto" => Ok(MarketType::Crypto),
+            "Equity" => Ok(MarketType::Equity),
+            _ => Err(()),
+        }
+    }
+}
 impl fmt::Display for MarketType {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-       match *self {
-           MarketType::Equity => write!(f, "Equity"),
-           MarketType::Crypto => write!(f, "Crypto")
-       }
+        match *self {
+            MarketType::Equity => write!(f, "Equity"),
+            MarketType::Crypto => write!(f, "Crypto"),
+        }
     }
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]

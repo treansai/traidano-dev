@@ -1,5 +1,7 @@
 use crate::base::AppState;
 use crate::bot::{Bot, BotConfig};
+use crate::dao::bot::get_all_running_bot;
+use sqlx::PgPool;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -11,6 +13,28 @@ impl BotManager {
     pub fn new() -> Self {
         BotManager {
             bots: HashMap::new(),
+        }
+    }
+
+    ///init bot from db
+    pub async fn init(&mut self, db: &PgPool, app_state: Arc<AppState>) {
+        match get_all_running_bot(db).await {
+            Ok(bots) => {
+                for bot_info in bots {
+                    if bot_info.clone().is_running {
+                        tracing::info!("Initializing bot {} ...", &bot_info.config.id);
+
+                        self.create_bot(bot_info.config.clone(), app_state.clone()).await;
+
+                        tracing::info!("Bot initialized");
+                    } else {
+                        tracing::info!("bot {} is not in running state", bot_info.config.id);
+                    }
+                }
+            }
+            Err(_) => {
+                tracing::error!("Cannot initialized bots");
+            }
         }
     }
 
