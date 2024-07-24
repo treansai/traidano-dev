@@ -3,9 +3,6 @@ mod strategies;
 
 use crate::base::{AppState, Client};
 use crate::bot::strategies::mean_reversion::mean_reversion_strategy;
-use crate::core::rate_limiter::RateLimiter;
-use axum::body::Body;
-use axum::http::Method;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::{write, Formatter};
