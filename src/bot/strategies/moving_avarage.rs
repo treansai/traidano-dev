@@ -17,6 +17,7 @@ pub async fn moving_average_strategy(state: AppState, config: BotConfig){
 
     if short_ema_value > long_ema_value {
         // buy order here
+
     } else {
         // sell order here
     }
