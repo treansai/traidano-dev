@@ -1,11 +1,38 @@
 version: "3"
 
 services:
+  traidano:
+    build:
+      context: .
+      dockerfile: docker-compose.yaml
+    ports:
+      - "9494:9494"
+    depends_on:
+      - grafana
+
+  jeager:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "14250:14250"
+
+  prometheus:
+    image: prom/prometheus:v2.30.3
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:8.2.2
+    volumes:
+      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./trading-bot-dashboard.json:/var/lib/grafana/dashboards/trading-bot-dashboard.json
     ports:
       - "3000:3000"
-
+    depends_on:
+      - prometheus
 
   db:
     image: postgres

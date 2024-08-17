@@ -1,5 +1,6 @@
 CREATE TABLE bots (
     id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(255),
     market VARCHAR(255) NOT NULL,
     trading_strategy VARCHAR(255) NOT NULL,
     symbols TEXT NOT NULL,
@@ -9,5 +10,6 @@ CREATE TABLE bots (
     max_positions INT NOT NULL,
     timeframes TEXT NOT NULL,
     volatility_window INT NOT NULL,
-    volatility_threshold DOUBLE PRECISION NOT NULL
+    volatility_threshold DOUBLE PRECISION NOT NULL,
+    is_running BOOLEAN DEFAULT FALSE
 );

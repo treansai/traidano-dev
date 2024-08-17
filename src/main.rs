@@ -33,12 +33,6 @@ async fn main() {
     tracing_subscriber::fmt::init();
 
     tracing::info!("App start");
-    // connection to
-    // configuration of api
-    // let config = configuration::build_config().expect("cannot load configuration");
-    // let api_config = config.api_config;
-    // let api_config =
-    //     ApiInfo::from_parts(api_config.base_url, api_config.api_key, api_config.secret).unwrap();
 
     let api_config = ApiConfig {
         base_url: "https://paper-api.alpaca.markets/v2/".to_string(),
@@ -83,7 +77,7 @@ async fn main() {
         .with_state(shared_state);
 
     // listener
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:9494")
         .await
         .unwrap();
 

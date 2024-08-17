@@ -54,7 +54,8 @@ pub async fn get_all_running_bot(db: &PgPool) -> Result<Vec<BotInfo>, Error> {
         r#"
         SELECT
             id,
-            name, market,
+            name,
+            market,
             trading_strategy,
             symbols,
             lookback,
