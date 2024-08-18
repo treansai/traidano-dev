@@ -12,9 +12,20 @@ use axum::{routing::get, routing::post, Router, ServiceExt};
 use base::{ApiConfig, Client};
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
+use axum::response::IntoResponse;
+use opentelemetry::trace::TracerProvider as _;
+use opentelemetry_sdk::trace::TracerProvider;
+use opentelemetry_prometheus::PrometheusExporter;
+use opentelemetry::{metrics::MeterProvider, KeyValue};
+use opentelemetry_sdk::metrics::SdkMeterProvider;
+use prometheus::{Registry as PrometheusRegistry};
+use prometheus::{TextEncoder, Encoder};
 use tokio::sync::Mutex;
 use tokio::task::unconstrained;
 use tracing::instrument::WithSubscriber;
+use tracing::{error, span};
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::Registry;
 
 pub mod base;
 pub mod bot;
@@ -29,8 +40,33 @@ pub mod trade;
 
 #[tokio::main]
 async fn main() {
+    // create a new prometheus registry
+    let registry = prometheus::Registry::new();
+
+    // configure OpenTelemetry to use this registry
+    let exporter = opentelemetry_prometheus::exporter()
+        .with_registry(registry.clone())
+        .build().unwrap();
+
+    // Initialize OpenTelemetry Tracer Provider
+    let provider = TracerProvider::builder()
+        .with_simple_exporter(opentelemetry_stdout::SpanExporter::default())
+        .build();
+    let tracer = provider.tracer("traidano");
+
+    // Set up tracing with OpenTelemetry
+    let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
+
+    let subscriber = Registry::default().with(telemetry);
     // init tracing
-    tracing_subscriber::fmt::init();
+    // Trace executed code
+    tracing::subscriber::with_default(subscriber, || {
+        // Spans will be sent to the configured OpenTelemetry exporter
+        let root = span!(tracing::Level::TRACE, "app_start", work_units = 2);
+        let _enter = root.enter();
+
+        error!("This event will be logged in the root span.");
+    });
 
     tracing::info!("App start");
 
@@ -74,6 +110,14 @@ async fn main() {
         .route("/bots", post(create_bot).get(get_bots))
         .route("/bots/:id", get(get_bot).delete(remove_bot))
         .route("/bots/:id/stop", post(stop_bot))
+        .route("/metrics", get(move || async {
+            let mut buffer = Vec::new();
+            let encoder = prometheus::TextEncoder::new();
+            let metric_family = registry.gather();
+            encoder.encode(&metric_family, &mut buffer).unwrap();
+            let response = String::from_utf8(buffer).unwrap();
+            response.into_response()
+        }))
         .with_state(shared_state);
 
     // listener

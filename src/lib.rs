@@ -1,5 +1,5 @@
 use axum::http::StatusCode;
-use base::Client;
+use opentelemetry_sdk::trace::TracerProvider;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
