@@ -126,10 +126,13 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                                 ..Order::default()
                             };
 
-                            match create_order(State(state.clone()), Json(order)).await {
-                                Ok(_) => tracing::info!("Order placed: {:?} {} shares of {}", side, qty, symbol),
-                                Err(e) => tracing::error!("Failed to place order for {}: {:?}", symbol, e),
-                            }
+                            create_order(State(state.clone()), Json(order)).await;
+                            tracing::info!(
+                                        "Order placed: {:?} {} shares of {}",
+                                        side,
+                                        qty,
+                                        symbol
+                                    );
                         }
                     }
                 }

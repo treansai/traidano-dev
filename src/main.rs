@@ -110,7 +110,8 @@ async fn main() {
         .route("/bots", post(create_bot).get(get_bots))
         .route("/bots/:id", get(get_bot).delete(remove_bot))
         .route("/bots/:id/stop", post(stop_bot))
-        .route("/metrics", get(move || async {
+        // instrumentation
+        .route("/metrics", get(move || async move {
             let mut buffer = Vec::new();
             let encoder = prometheus::TextEncoder::new();
             let metric_family = registry.gather();

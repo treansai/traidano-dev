@@ -100,10 +100,8 @@ pub async fn moving_average_strategy(state: Arc<AppState>, config: BotConfig) {
                             ..Order::default()
                         };
 
-                        match create_order(State(state.clone()), Json(order)).await {
-                            Ok(_) => tracing::info!("Buy order placed: {} shares of {}", qty, symbol),
-                            Err(e) => tracing::error!("Failed to place buy order for {}: {:?}", symbol, e),
-                        }
+                        create_order(State(state.clone()), Json(order)).await;
+                        tracing::info!("Buy order placed: {} shares of {}", qty, symbol);
                     }
                 } else if short_ema_value < long_ema_value && current_position >= 0.0 {
                     // Sell signal
@@ -120,10 +118,8 @@ pub async fn moving_average_strategy(state: Arc<AppState>, config: BotConfig) {
                             ..Order::default()
                         };
 
-                        match create_order(State(state.clone()), Json(order)).await {
-                            Ok(_) => tracing::info!("Sell order placed: {} shares of {}", qty, symbol),
-                            Err(e) => tracing::error!("Failed to place sell order for {}: {:?}", symbol, e),
-                        }
+                        create_order(State(state.clone()), Json(order)).await ;
+                        tracing::info!("Sell order placed: {} shares of {}", qty, symbol);
                     }
                 }
             }

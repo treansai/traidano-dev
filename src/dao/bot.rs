@@ -78,7 +78,7 @@ pub async fn get_all_running_bot(db: &PgPool) -> Result<Vec<BotInfo>, Error> {
         .map(|r| {
             let config = BotConfig {
                 id: r.id,
-                name: r.name,
+                name: r.name.unwrap(),
                 market: MarketType::from_str(&r.market).unwrap(),
                 trading_strategy: BotStrategy::from_str(&r.trading_strategy).unwrap(),
                 symbols: r.symbols.split(',').map(String::from).collect(),

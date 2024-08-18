@@ -151,10 +151,8 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                             ..Order::default()
                         };
 
-                        match create_order(State(state.clone()), Json(order)).await {
-                            Ok(_) => tracing::info!("Buy order placed: {} shares of {}", qty, symbol),
-                            Err(e) => tracing::error!("Failed to place buy order for {}: {:?}", symbol, e),
-                        }
+                        create_order(State(state.clone()), Json(order)).await;
+                        tracing::info!("Buy order placed: {} shares of {}", qty, symbol);
                     }
                 } else if last_price >= resistance && volume_anomaly && !bullish_order_flow && current_position >= 0.0 {
                     // Potential smart money distribution, consider selling
@@ -170,11 +168,8 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                             limit_price: Some((last_price * 0.999) as i32),
                             ..Order::default()
                         };
-
-                        match create_order(State(state.clone()), Json(order)).await {
-                            Ok(_) => tracing::info!("Sell order placed: {} shares of {}", qty, symbol),
-                            Err(e) => tracing::error!("Failed to place sell order for {}: {:?}", symbol, e),
-                        }
+                        create_order(State(state.clone()), Json(order)).await ;
+                        tracing::info!("Sell order placed: {} shares of {}", qty, symbol);
                     }
                 }
             }
