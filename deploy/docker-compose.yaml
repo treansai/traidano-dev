@@ -1,38 +1,47 @@
-version: "3"
-
 services:
   traidano:
     build:
-      context: .
-      dockerfile: docker-compose.yaml
+      context: ..
+      dockerfile: Dockerfile
     ports:
       - "9494:9494"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
     depends_on:
       - grafana
+      - db
+    networks:
+      - app-network
 
   jeager:
     image: jaegertracing/all-in-one:latest
     ports:
       - "16686:16686"
       - "14250:14250"
+    networks:
+      - app-network
 
   prometheus:
     image: prom/prometheus:v2.30.3
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml
     ports:
       - "9090:9090"
+    networks:
+      - app-network
 
   grafana:
     image: grafana/grafana:8.2.2
     volumes:
-      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
-      - ./grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
-      - ./trading-bot-dashboard.json:/var/lib/grafana/dashboards/trading-bot-dashboard.json
+      - ./prometheus/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./prometheus/grafana-dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+      - ./prometheus/traidano-dashboard.json:/var/lib/grafana/dashboards/traidano-dashboard.json
     ports:
       - "3000:3000"
     depends_on:
       - prometheus
+    networks:
+      - app-network
 
   db:
     image: postgres
@@ -46,7 +55,19 @@ services:
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+        test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+        interval: 5s
+        timeout: 5s
+        retries: 5
 
 volumes:
   postgres_data:
     driver: local
+
+
+networks:
+  app-network:
+    driver: bridge

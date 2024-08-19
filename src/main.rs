@@ -12,20 +12,31 @@ use axum::{routing::get, routing::post, Router, ServiceExt};
 use base::{ApiConfig, Client};
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
+use std::time::Duration;
+use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use opentelemetry::trace::TracerProvider as _;
-use opentelemetry_sdk::trace::TracerProvider;
+use opentelemetry::trace::{TraceError, TracerProvider};
 use opentelemetry_prometheus::PrometheusExporter;
 use opentelemetry::{metrics::MeterProvider, KeyValue};
+use opentelemetry_otlp::{MetricsExporter, WithExportConfig};
 use opentelemetry_sdk::metrics::SdkMeterProvider;
+use opentelemetry_sdk::{runtime, trace as sdktrace, Resource};
+use opentelemetry_sdk::trace::Config as SdkTraceConfig;
+use opentelemetry_sdk::runtime::Tokio;
+use opentelemetry_prometheus::exporter as prometheus_exporter;
 use prometheus::{Registry as PrometheusRegistry};
 use prometheus::{TextEncoder, Encoder};
+use serde::Serialize;
+use thiserror::Error;
 use tokio::sync::Mutex;
 use tokio::task::unconstrained;
+use tower_http::trace::TraceLayer;
 use tracing::instrument::WithSubscriber;
 use tracing::{error, span};
-use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use tracing_subscriber::Registry;
+use once_cell::unsync::Lazy;
 
 pub mod base;
 pub mod bot;
@@ -40,35 +51,18 @@ pub mod trade;
 
 #[tokio::main]
 async fn main() {
-    // create a new prometheus registry
-    let registry = prometheus::Registry::new();
+    // Create a Prometheus registry
+    let prometheus_registry = prometheus::Registry::new();
 
-    // configure OpenTelemetry to use this registry
-    let exporter = opentelemetry_prometheus::exporter()
-        .with_registry(registry.clone())
-        .build().unwrap();
+    let prometheus_exporter = prometheus_exporter()
+        .with_registry(prometheus_registry)
+        .build()
+        .unwrap();
 
-    // Initialize OpenTelemetry Tracer Provider
-    let provider = TracerProvider::builder()
-        .with_simple_exporter(opentelemetry_stdout::SpanExporter::default())
-        .build();
-    let tracer = provider.tracer("traidano");
+    let provider = SdkMeterProvider::builder().with_reader(prometheus_exporter).build();
 
     // Set up tracing with OpenTelemetry
-    let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
 
-    let subscriber = Registry::default().with(telemetry);
-    // init tracing
-    // Trace executed code
-    tracing::subscriber::with_default(subscriber, || {
-        // Spans will be sent to the configured OpenTelemetry exporter
-        let root = span!(tracing::Level::TRACE, "app_start", work_units = 2);
-        let _enter = root.enter();
-
-        error!("This event will be logged in the root span.");
-    });
-
-    tracing::info!("App start");
 
     let api_config = ApiConfig {
         base_url: "https://paper-api.alpaca.markets/v2/".to_string(),
@@ -81,11 +75,15 @@ async fn main() {
     let client = Client::builder().config(api_config).build().unwrap();
 
     // postgres pool
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let db = PgPoolOptions::new()
         .max_connections(20)
-        .connect("postgresql://postgres:postgres@localhost:5432/postgres")
+        .connect(&database_url)
         .await
-        .unwrap();
+        .map_err(|e| {
+            eprintln!("Failed to connect to the database: {}", e);
+            std::process::exit(1);
+        }).unwrap();
 
     let mut bot_manager = BotManager::new();
 
@@ -111,14 +109,8 @@ async fn main() {
         .route("/bots/:id", get(get_bot).delete(remove_bot))
         .route("/bots/:id/stop", post(stop_bot))
         // instrumentation
-        .route("/metrics", get(move || async move {
-            let mut buffer = Vec::new();
-            let encoder = prometheus::TextEncoder::new();
-            let metric_family = registry.gather();
-            encoder.encode(&metric_family, &mut buffer).unwrap();
-            let response = String::from_utf8(buffer).unwrap();
-            response.into_response()
-        }))
+        .route("/metrics", get(metrics_handler))
+        .layer(TraceLayer::new_for_http())
         .with_state(shared_state);
 
     // listener
@@ -129,4 +121,14 @@ async fn main() {
     axum::serve(listener, app.into_make_service())
         .await
         .unwrap();
+}
+
+
+
+async fn metrics_handler() -> String {
+    let mut buffer = Vec::new();
+    let encoder = TextEncoder::new();
+    let metric_families = prometheus::default_registry().gather();
+    encoder.encode(&metric_families, &mut buffer).unwrap();
+    String::from_utf8(buffer).unwrap()
 }
