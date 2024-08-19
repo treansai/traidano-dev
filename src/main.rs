@@ -36,7 +36,7 @@ use tracing::instrument::WithSubscriber;
 use tracing::{error, span};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use tracing_subscriber::Registry;
-use once_cell::unsync::Lazy;
+
 
 pub mod base;
 pub mod bot;
@@ -61,14 +61,19 @@ async fn main() {
 
     let provider = SdkMeterProvider::builder().with_reader(prometheus_exporter).build();
 
-    // Set up tracing with OpenTelemetry
+    let tracer_provider = init_tracer_provider();
 
+    // Set up tracing with OpenTelemetry
+    let base_url = std::env::var("BASE_URL").expect("base url must be set");
+    let stream_url = std::env::var("STREAM_URL").expect("STREAM_URL must be set");
+    let api_key = std::env::var("API_KEY").expect("API_KEY must be set");
+    let secret_key = std::env::var("SECRET_KEY").expect("SECRET_KEY must be set");
 
     let api_config = ApiConfig {
-        base_url: "https://paper-api.alpaca.markets/v2/".to_string(),
-        steam_url: None,
-        api_key: "PKGA4DTIP5MZM8H0KQJL".to_string(),
-        secret_key: "bEBazJLr2BdbyKDLNMPQKrSxGzwELRBYGICg5Jh1".to_string(),
+        base_url,
+        stream_url,
+        api_key,
+        secret_key,
     };
 
     // alpaca client

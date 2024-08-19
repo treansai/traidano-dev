@@ -19,7 +19,7 @@ static RESOURCE: Lazy<Resource> = Lazy::new(|| {
     )])
 });
 
-fn init_tracer_provider() -> Result<sdktrace::TracerProvider, TraceError> {
+pub fn init_tracer_provider() -> Result<sdktrace::TracerProvider, TraceError> {
     let otlp_endpoint = std::env::var("otlp_endpoint").expect("otlp_endpoint must be set");
     opentelemetry_otlp::new_pipeline()
         .tracing()
@@ -32,7 +32,7 @@ fn init_tracer_provider() -> Result<sdktrace::TracerProvider, TraceError> {
         .install_batch(Tokio)
 }
 
-fn init_metrics() -> Result<SdkMeterProvider, MetricsError> {
+pub fn init_metrics() -> Result<SdkMeterProvider, MetricsError> {
     let otlp_endpoint = std::env::var("OTLP_ENDPOINT").expect("OTLP_ENDPOINT must be set");
     let exporter_config = ExportConfig {
         endpoint: otlp_endpoint,
@@ -48,7 +48,7 @@ fn init_metrics() -> Result<SdkMeterProvider, MetricsError> {
         .with_resource(RESOURCE.clone())
         .build()
 }
-fn init_logs() -> Result<logs::LoggerProvider, LogError> {
+pub fn init_logs() -> Result<logs::LoggerProvider, LogError> {
     let otlp_endpoint = std::env::var("OTLP_ENDPOINT").expect("OTLP_ENDPOINT must be set");
     opentelemetry_otlp::new_pipeline()
         .logging()

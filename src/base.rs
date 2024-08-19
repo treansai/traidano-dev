@@ -26,7 +26,7 @@ pub struct ClientBuildError;
 #[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq)]
 pub struct ApiConfig {
     pub base_url: String,
-    pub steam_url: Option<String>,
+    pub stream_url: String,
     pub api_key: String,
     pub secret_key: String,
 }
