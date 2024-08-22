@@ -36,7 +36,7 @@ use tracing::instrument::WithSubscriber;
 use tracing::{error, span};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use tracing_subscriber::Registry;
-
+use traidano::{init_logs, init_metrics, init_tracer_provider};
 
 pub mod base;
 pub mod bot;
@@ -61,7 +61,15 @@ async fn main() {
 
     let provider = SdkMeterProvider::builder().with_reader(prometheus_exporter).build();
 
-    let tracer_provider = init_tracer_provider();
+    // init tracer_provider
+    let tracer_provider = init_tracer_provider().expect("error to init trace provider");
+
+    // init metrics
+    let metrics = init_metrics().expect("error to initialize metrics provider");
+
+    // init logs
+    let logs = init_logs().expect("error to initialize log provider");
+
 
     // Set up tracing with OpenTelemetry
     let base_url = std::env::var("BASE_URL").expect("base url must be set");
