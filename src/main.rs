@@ -15,10 +15,12 @@ use std::sync::Arc;
 use std::time::Duration;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use opentelemetry::global;
 use opentelemetry::trace::TracerProvider as _;
 use opentelemetry::trace::{TraceError, TracerProvider};
 use opentelemetry_prometheus::PrometheusExporter;
 use opentelemetry::{metrics::MeterProvider, KeyValue};
+use opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge;
 use opentelemetry_otlp::{MetricsExporter, WithExportConfig};
 use opentelemetry_sdk::metrics::SdkMeterProvider;
 use opentelemetry_sdk::{runtime, trace as sdktrace, Resource};
@@ -52,6 +54,7 @@ pub mod trade;
 #[tokio::main]
 async fn main() {
     // Create a Prometheus registry
+    // Create a Prometheus registry
     let prometheus_registry = prometheus::Registry::new();
 
     let prometheus_exporter = prometheus_exporter()
@@ -65,13 +68,29 @@ async fn main() {
     let tracer_provider = init_tracer_provider().expect("error to init trace provider");
 
     // init metrics
-    let metrics = init_metrics().expect("error to initialize metrics provider");
+    let meter_provider = init_metrics().expect("error to initialize metrics provider");
 
     // init logs
-    let logs = init_logs().expect("error to initialize log provider");
+    let logger_provider = init_logs().expect("error to initialize log provider");
 
+    //set to global
+    global::set_tracer_provider(tracer_provider.clone());
+    global::set_meter_provider(meter_provider.clone());
+    // Create a new OpenTelemetryTracingBridge using the above LoggerProvider.
+    let layer = OpenTelemetryTracingBridge::new(&logger_provider);
 
-    // Set up tracing with OpenTelemetry
+    // init tracing subscriber
+    tracing_subscriber::registry()
+        .with(layer)
+        .init();
+
+    // tra
+    let tracer = global::tracer_provider()
+        .tracer_builder("traidano")
+        .build();
+    let meter = global::meter("traidano-meter");
+
+    // Get vars
     let base_url = std::env::var("BASE_URL").expect("base url must be set");
     let stream_url = std::env::var("STREAM_URL").expect("STREAM_URL must be set");
     let api_key = std::env::var("API_KEY").expect("API_KEY must be set");
@@ -106,6 +125,8 @@ async fn main() {
         db: db.clone(),
         bot_manager: Mutex::new(bot_manager),
         rate_limiter: Arc::new(Mutex::new(RateLimiter::new(200.0 / 60.0, 50.0))),
+        tracer,
+        meter
     };
 
     let shared_state = Arc::new(state);
@@ -134,6 +155,10 @@ async fn main() {
     axum::serve(listener, app.into_make_service())
         .await
         .unwrap();
+
+    global::shutdown_tracer_provider();
+    meter_provider.shutdown().unwrap();
+    logger_provider.shutdown().unwrap();
 }
 
 

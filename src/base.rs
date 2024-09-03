@@ -14,6 +14,8 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::sync::Arc;
+use opentelemetry::global::BoxedTracer;
+use opentelemetry::metrics::Meter;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use tokio::sync::Mutex;
@@ -119,6 +121,8 @@ pub struct AppState {
     pub db: PgPool,
     pub bot_manager: Mutex<BotManager>,
     pub rate_limiter: Arc<Mutex<RateLimiter>>,
+    pub tracer : BoxedTracer,
+    pub meter : Meter
 }
 
 #[cfg(test)]
