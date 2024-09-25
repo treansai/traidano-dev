@@ -42,7 +42,14 @@ services:
       - prometheus
     networks:
       - app-network
-
+      -
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    command: ["--config=/etc/otel-collector-config.yaml", "${OTELCOL_ARGS"]
+    volumes:
+      - ./otel/otel-collector-co,fig.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"
   db:
     image: postgres
     restart: always

@@ -1,43 +1,30 @@
 use crate::base::AppState;
 use crate::bot::bot_manager::BotManager;
-use crate::configuration::BaseConfig;
 use crate::core::rate_limiter::RateLimiter;
-use crate::handlers::account::{get_account, get_http_account};
+use crate::handlers::account::{get_http_account};
 use crate::handlers::bot::{create_bot, get_bot, get_bots, remove_bot, stop_bot};
 use crate::handlers::order::{create_order, get_all_order};
 use anyhow::Context;
 use axum::handler::Handler;
-use axum::routing::delete;
 use axum::{routing::get, routing::post, Router, ServiceExt};
 use base::{ApiConfig, Client};
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
-use std::time::Duration;
-use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use opentelemetry::global;
 use opentelemetry::trace::TracerProvider as _;
-use opentelemetry::trace::{TraceError, TracerProvider};
-use opentelemetry_prometheus::PrometheusExporter;
-use opentelemetry::{metrics::MeterProvider, KeyValue};
+use opentelemetry::trace::{TracerProvider};
+use opentelemetry::{metrics::MeterProvider};
 use opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge;
-use opentelemetry_otlp::{MetricsExporter, WithExportConfig};
+use opentelemetry_otlp::{WithExportConfig};
 use opentelemetry_sdk::metrics::SdkMeterProvider;
-use opentelemetry_sdk::{runtime, trace as sdktrace, Resource};
-use opentelemetry_sdk::trace::Config as SdkTraceConfig;
-use opentelemetry_sdk::runtime::Tokio;
 use opentelemetry_prometheus::exporter as prometheus_exporter;
-use prometheus::{Registry as PrometheusRegistry};
 use prometheus::{TextEncoder, Encoder};
 use serde::Serialize;
-use thiserror::Error;
 use tokio::sync::Mutex;
-use tokio::task::unconstrained;
 use tower_http::trace::TraceLayer;
 use tracing::instrument::WithSubscriber;
-use tracing::{error, span};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use tracing_subscriber::Registry;
 use traidano::{init_logs, init_metrics, init_tracer_provider};
 
 pub mod base;
@@ -53,7 +40,6 @@ pub mod trade;
 
 #[tokio::main]
 async fn main() {
-    // Create a Prometheus registry
     // Create a Prometheus registry
     let prometheus_registry = prometheus::Registry::new();
 
