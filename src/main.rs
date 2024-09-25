@@ -1,3 +1,4 @@
+// main.rs
 use crate::base::AppState;
 use crate::bot::bot_manager::BotManager;
 use crate::core::rate_limiter::RateLimiter;
@@ -62,6 +63,7 @@ async fn main() {
     //set to global
     global::set_tracer_provider(tracer_provider.clone());
     global::set_meter_provider(meter_provider.clone());
+
     // Create a new OpenTelemetryTracingBridge using the above LoggerProvider.
     let layer = OpenTelemetryTracingBridge::new(&logger_provider);
 
@@ -77,7 +79,7 @@ async fn main() {
     let meter = global::meter("traidano-meter");
 
     // Get vars
-    let base_url = std::env::var("BASE_URL").expect("base url must be set");
+    let base_url = std::env::var("BASE_URL").expect("BASE_URL must be set");
     let stream_url = std::env::var("STREAM_URL").expect("STREAM_URL must be set");
     let api_key = std::env::var("API_KEY").expect("API_KEY must be set");
     let secret_key = std::env::var("SECRET_KEY").expect("SECRET_KEY must be set");
@@ -137,6 +139,7 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:9494")
         .await
         .unwrap();
+
 
     axum::serve(listener, app.into_make_service())
         .await

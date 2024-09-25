@@ -7,9 +7,15 @@ services:
       - "9494:9494"
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
+      - OTLP_ENDPOINT=http://localhost:4317
+      - BASE_URL=https://paper-api.alpaca.markets/v2
+      - STREAM_URL=https://paper-api.alpaca.markets/v2
+      - API_KEY=PKGA4DTIP5MZM8H0KQJL
+      - SECRET_KEY=bEBazJLr2BdbyKDLNMPQKrSxGzwELRBYGICg5Jh1
     depends_on:
       - grafana
       - db
+      - otel-collector
     networks:
       - app-network
 
@@ -42,14 +48,18 @@ services:
       - prometheus
     networks:
       - app-network
-      -
+
   otel-collector:
     image: otel/opentelemetry-collector:latest
-    command: ["--config=/etc/otel-collector-config.yaml", "${OTELCOL_ARGS"]
+    command: ["--config=/etc/otel-collector-config.yaml", "${OTELCOL_ARGS}"]
     volumes:
-      - ./otel/otel-collector-co,fig.yaml:/etc/otel-collector-config.yaml
+      - ./otel/otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
       - "4317:4317"
+      - "4318:4318"
+    networks:
+      - app-network
+
   db:
     image: postgres
     restart: always
