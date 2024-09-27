@@ -77,12 +77,16 @@ pub async fn get_bot(
 
 pub async fn get_bots(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let manager = state.bot_manager.lock().await;
-
+    tracing::info!("getting bots");
     let bot_infos: HashMap<String, BotInfo> = manager
         .bots
         .iter()
         .map(|(key, bot)| (key.clone(), BotInfo::from(bot)))
         .collect();
+
+    // len bot
+    let n_bots = bot_infos.clone().len();
+    tracing::info!("{} bot{} found", n_bots, if n_bots > 0 {"s"} else {""} );
 
     Json(bot_infos)
 }

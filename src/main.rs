@@ -27,12 +27,11 @@ use tokio::sync::Mutex;
 use tower_http::trace::TraceLayer;
 use tracing::info;
 use tracing::instrument::WithSubscriber;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 use traidano::{init_logs, init_metrics, init_tracer_provider};
 use opentelemetry_stdout as stdout;
 use tracing::{error, span};
-use tracing_subscriber::layer::SubscriberExt;
-use tracing_subscriber::Registry;
+use tracing_subscriber::{fmt, Registry};
 
 
 pub mod base;
@@ -64,9 +63,17 @@ async fn main() {
     let logger_provider = init_logs().unwrap();
     let logger_layer = OpenTelemetryTracingBridge::new(&logger_provider);
 
+    // filter
+    let filter = EnvFilter::new("info")
+        .add_directive("hyper=error".parse().unwrap())
+        .add_directive("tonic=error".parse().unwrap())
+        .add_directive("reqwest=error".parse().unwrap());
+
     tracing_subscriber::registry()
     .with(telemetry)
     .with(logger_layer)
+    .with(fmt::Layer::default())
+    .with(filter)
     .init();
 
 
@@ -128,30 +135,19 @@ async fn main() {
         .layer(TraceLayer::new_for_http())
         .with_state(shared_state);
 
-    //////////
-    tracer.in_span("Main ops", |ctx| {
-        let span = ctx.span();
-
-        span.add_event(
-            "Starting the server".to_string(),
-            vec![KeyValue::new("test", 100)]
-        );
-
-        info!(target: "my-target", "hello from {}. My price is {}. I am also inside a Span!", "banana", 2.99);
-
-    });
-
     // listener
     let listener = tokio::net::TcpListener::bind("127.0.0.1:9494")
         .await
         .unwrap();
 
-
+    tracing::info!("App is running");
     axum::serve(listener, app.into_make_service())
         .await
         .unwrap();
 
     global::shutdown_tracer_provider();
+    logger_provider.shutdown().unwrap();
+
 }
 
 
