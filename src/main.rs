@@ -10,6 +10,7 @@ use axum::handler::Handler;
 use axum::{routing::get, routing::post, Router, ServiceExt};
 use base::{ApiConfig, Client};
 use sqlx::postgres::PgPoolOptions;
+use tracing_opentelemetry::OpenTelemetryLayer;
 use std::sync::Arc;
 use axum::response::IntoResponse;
 use opentelemetry::{global, KeyValue};
@@ -28,6 +29,11 @@ use tracing::info;
 use tracing::instrument::WithSubscriber;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use traidano::{init_logs, init_metrics, init_tracer_provider};
+use opentelemetry_stdout as stdout;
+use tracing::{error, span};
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::Registry;
+
 
 pub mod base;
 pub mod bot;
@@ -46,9 +52,23 @@ async fn main() {
     let tracer_provider = init_tracer_provider().unwrap();
     global::set_tracer_provider(tracer_provider.clone());
 
-    let tracer = global::tracer_provider()
-        .tracer_builder("basic")
-        .build();
+    // let tracer = global::tracer_provider()
+    //     .tracer_builder("basic")
+    //     .build();
+
+    let tracer = tracer_provider.tracer("traindano");
+
+    let telemetry = OpenTelemetryLayer::new(tracer);
+
+    // logger
+    let logger_provider = init_logs().unwrap();
+    let logger_layer = OpenTelemetryTracingBridge::new(&logger_provider);
+
+    tracing_subscriber::registry()
+    .with(telemetry)
+    .with(logger_layer)
+    .init();
+
 
 
     // Get vars

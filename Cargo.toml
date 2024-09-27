@@ -35,7 +35,7 @@ sqlx = { version = "0.8.0", features = ["runtime-tokio-native-tls", "postgres"] 
 ta = "0.5.0"
 thiserror = "1.0.61"
 tracing = "0.1.40"
-tracing-opentelemetry = "0.25.0"
+tracing-opentelemetry = "0.26.0"
 tracing-subscriber = {version = "0.3.18", features = ["env-filter","registry", "std"]}
 tokio = { version = "1", features = ["full"] }
 tokio-rustls = "0.26.0"

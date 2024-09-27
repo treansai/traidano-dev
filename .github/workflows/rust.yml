@@ -13,6 +13,13 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      OTLP_ENDPOINT: http://localhost:4318
+      BASE_URL: https://paper-api.alpaca.markets/v2
+      STREAM_URL : https://paper-api.alpaca.markets/v2
+      API_KEY : API_KEY
+      SECRET_KEY : SECRETE
 
     steps:
     - uses: actions/checkout@v4
