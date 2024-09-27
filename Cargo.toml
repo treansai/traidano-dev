@@ -19,12 +19,13 @@ num-decimal = { version = "0.2.4", default-features = false, features = [
     "serde",
 ]}
 native-tls = "0.2.12"
-opentelemetry = {version = "0.24.0", features = ["metrics", "logs", "trace"] }
+opentelemetry = {version = "0.25.0", features = ["metrics", "logs", "trace"] }
 opentelemetry_sdk = { version = "*", features = ["rt-tokio", "logs"] }
-opentelemetry-stdout = {version = "0.5.0", features = ["trace"]}
-opentelemetry-otlp = { version = "0.17.0", features = ["tonic", "metrics", "logs", "grpc-tonic", "tls-roots"] }
-opentelemetry-semantic-conventions = "0.16.0"
+opentelemetry-stdout = {version = "0.25.0", features = ["trace"]}
+opentelemetry-otlp = { version = "0.25.0", features = ["http", "http-json", "http-proto", "reqwest-client"] }
+opentelemetry-semantic-conventions = "0.25.0"
 opentelemetry-prometheus = "0.17.0"
+opentelemetry-appender-tracing = {version = "0.25.0", default-features = false}
 prometheus = "0.13.4"
 serde = { version = "1.0.203", features = ["derive"] }
 serde_yaml = "0.9.33"
@@ -35,7 +36,6 @@ ta = "0.5.0"
 thiserror = "1.0.61"
 tracing = "0.1.40"
 tracing-opentelemetry = "0.25.0"
-opentelemetry-appender-tracing = {version = "0.5.0", default-features = false}
 tracing-subscriber = {version = "0.3.18", features = ["env-filter","registry", "std"]}
 tokio = { version = "1", features = ["full"] }
 tokio-rustls = "0.26.0"

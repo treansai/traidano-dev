@@ -12,8 +12,8 @@ use base::{ApiConfig, Client};
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 use axum::response::IntoResponse;
-use opentelemetry::global;
-use opentelemetry::trace::TracerProvider as _;
+use opentelemetry::{global, KeyValue};
+use opentelemetry::trace::{TraceContextExt, Tracer, TracerProvider as _};
 use opentelemetry::trace::{TracerProvider};
 use opentelemetry::{metrics::MeterProvider};
 use opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge;
@@ -24,6 +24,7 @@ use prometheus::{TextEncoder, Encoder};
 use serde::Serialize;
 use tokio::sync::Mutex;
 use tower_http::trace::TraceLayer;
+use tracing::info;
 use tracing::instrument::WithSubscriber;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use traidano::{init_logs, init_metrics, init_tracer_provider};
@@ -41,42 +42,14 @@ pub mod trade;
 
 #[tokio::main]
 async fn main() {
-    // Create a Prometheus registry
-    let prometheus_registry = prometheus::Registry::new();
-
-    let prometheus_exporter = prometheus_exporter()
-        .with_registry(prometheus_registry)
-        .build()
-        .unwrap();
-
-    let provider = SdkMeterProvider::builder().with_reader(prometheus_exporter).build();
-
-    // init tracer_provider
-    let tracer_provider = init_tracer_provider().expect("error to init trace provider");
-
-    // init metrics
-    let meter_provider = init_metrics().expect("error to initialize metrics provider");
-
-    // init logs
-    let logger_provider = init_logs().expect("error to initialize log provider");
-
-    //set to global
+    // Create tracer
+    let tracer_provider = init_tracer_provider().unwrap();
     global::set_tracer_provider(tracer_provider.clone());
-    global::set_meter_provider(meter_provider.clone());
 
-    // Create a new OpenTelemetryTracingBridge using the above LoggerProvider.
-    let layer = OpenTelemetryTracingBridge::new(&logger_provider);
-
-    // init tracing subscriber
-    tracing_subscriber::registry()
-        .with(layer)
-        .init();
-
-    // tra
     let tracer = global::tracer_provider()
-        .tracer_builder("traidano")
+        .tracer_builder("basic")
         .build();
-    let meter = global::meter("traidano-meter");
+
 
     // Get vars
     let base_url = std::env::var("BASE_URL").expect("BASE_URL must be set");
@@ -113,8 +86,8 @@ async fn main() {
         db: db.clone(),
         bot_manager: Mutex::new(bot_manager),
         rate_limiter: Arc::new(Mutex::new(RateLimiter::new(200.0 / 60.0, 50.0))),
-        tracer,
-        meter
+        //tracer,
+        // meter
     };
 
     let shared_state = Arc::new(state);
@@ -135,6 +108,19 @@ async fn main() {
         .layer(TraceLayer::new_for_http())
         .with_state(shared_state);
 
+    //////////
+    tracer.in_span("Main ops", |ctx| {
+        let span = ctx.span();
+
+        span.add_event(
+            "Starting the server".to_string(),
+            vec![KeyValue::new("test", 100)]
+        );
+
+        info!(target: "my-target", "hello from {}. My price is {}. I am also inside a Span!", "banana", 2.99);
+
+    });
+
     // listener
     let listener = tokio::net::TcpListener::bind("127.0.0.1:9494")
         .await
@@ -146,8 +132,6 @@ async fn main() {
         .unwrap();
 
     global::shutdown_tracer_provider();
-    meter_provider.shutdown().unwrap();
-    logger_provider.shutdown().unwrap();
 }
 
 

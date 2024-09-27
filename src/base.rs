@@ -121,8 +121,8 @@ pub struct AppState {
     pub db: PgPool,
     pub bot_manager: Mutex<BotManager>,
     pub rate_limiter: Arc<Mutex<RateLimiter>>,
-    pub tracer : BoxedTracer,
-    pub meter : Meter
+    //pub tracer : BoxedTracer,
+    //pub meter : Meter
 }
 
 #[cfg(test)]
@@ -133,7 +133,7 @@ mod tests {
     fn create_client() {
         let api_config = ApiConfig {
             base_url: "base".to_string(),
-            steam_url: None,
+            stream_url: "".to_string(),
             api_key: "key".to_string(),
             secret_key: "secret".to_string(),
         };

@@ -4,10 +4,11 @@ use once_cell::sync::Lazy;
 use opentelemetry::KeyValue;
 use opentelemetry::logs::LogError;
 use opentelemetry::metrics::MetricsError;
-use opentelemetry_otlp::{ExportConfig, WithExportConfig};
+use opentelemetry_otlp::{ExportConfig, HttpExporterBuilder, Protocol, WithExportConfig};
 use opentelemetry_sdk::{logs, runtime, trace as sdktrace, Resource};
 use opentelemetry_sdk::trace::Config as SdkTraceConfig;
 use opentelemetry::trace::{TraceError, TracerProvider};
+use opentelemetry_prometheus::exporter;
 use opentelemetry_sdk::metrics::SdkMeterProvider;
 use opentelemetry_sdk::runtime::Tokio;
 use serde::Serialize;
@@ -20,13 +21,15 @@ static RESOURCE: Lazy<Resource> = Lazy::new(|| {
     )])
 });
 
+
 pub fn init_tracer_provider() -> Result<sdktrace::TracerProvider, TraceError> {
     let otlp_endpoint =  format!("{}/v1/traces", std::env::var("OTLP_ENDPOINT").expect("OTLP_ENDPOINT must be set"));
     opentelemetry_otlp::new_pipeline()
         .tracing()
         .with_exporter(
             opentelemetry_otlp::new_exporter()
-                .tonic()
+                .http()
+                .with_protocol(Protocol::HttpBinary)
                 .with_endpoint(otlp_endpoint)
         )
         .with_trace_config(SdkTraceConfig::default().with_resource(RESOURCE.clone()))
@@ -35,6 +38,7 @@ pub fn init_tracer_provider() -> Result<sdktrace::TracerProvider, TraceError> {
 
 pub fn init_metrics() -> Result<SdkMeterProvider, MetricsError> {
     let otlp_endpoint = format!("{}/v1/metrics", std::env::var("OTLP_ENDPOINT").expect("OTLP_ENDPOINT must be set"));
+    println!("{}", &otlp_endpoint);
     let exporter_config = ExportConfig {
         endpoint: otlp_endpoint,
         ..ExportConfig::default()
@@ -43,7 +47,8 @@ pub fn init_metrics() -> Result<SdkMeterProvider, MetricsError> {
         .metrics(Tokio)
         .with_exporter(
             opentelemetry_otlp::new_exporter()
-                .tonic()
+                .http()
+                .with_protocol(Protocol::HttpBinary)
                 .with_export_config(exporter_config),
         )
         .with_resource(RESOURCE.clone())
@@ -51,12 +56,14 @@ pub fn init_metrics() -> Result<SdkMeterProvider, MetricsError> {
 }
 pub fn init_logs() -> Result<logs::LoggerProvider, LogError> {
     let otlp_endpoint = format!("{}/v1/logs", std::env::var("OTLP_ENDPOINT").expect("OTLP_ENDPOINT must be set"));
+    println!("{}", &otlp_endpoint);
     opentelemetry_otlp::new_pipeline()
         .logging()
         .with_resource(RESOURCE.clone())
         .with_exporter(
             opentelemetry_otlp::new_exporter()
-                .tonic()
+                .http()
+                .with_protocol(Protocol::HttpBinary)
                 .with_endpoint(otlp_endpoint)
         )
         .install_batch(Tokio)

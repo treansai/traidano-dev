@@ -6,8 +6,8 @@ services:
     ports:
       - "9494:9494"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
-      - OTLP_ENDPOINT=http://localhost:4317
+      - DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
+      - OTLP_ENDPOINT=http://localhost:4318
       - BASE_URL=https://paper-api.alpaca.markets/v2
       - STREAM_URL=https://paper-api.alpaca.markets/v2
       - API_KEY=PKGA4DTIP5MZM8H0KQJL
