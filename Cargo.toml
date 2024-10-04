@@ -7,7 +7,7 @@ edition = "2021"
 name = "traidano"
 path = "src/main.rs"
 
-[[lib]]
+[lib]
 name = "traidano"
 path = "src/lib.rs"
 
