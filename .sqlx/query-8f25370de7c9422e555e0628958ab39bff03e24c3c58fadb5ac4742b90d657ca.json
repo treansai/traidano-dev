@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO bots (\n                id,\n                name,\n                market,\n                trading_strategy,\n                symbols,\n                lookback,\n                threshold,\n                risk_per_trade,\n                max_positions,\n                timeframes,\n                volatility_window,\n                volatility_threshold,\n                is_running\n            )\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)\n            RETURNING id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Text",
+        "Int4",
+        "Float8",
+        "Float8",
+        "Int4",
+        "Text",
+        "Int4",
+        "Float8",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "8f25370de7c9422e555e0628958ab39bff03e24c3c58fadb5ac4742b90d657ca"
+}

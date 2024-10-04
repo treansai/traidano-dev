@@ -1,0 +1,92 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            id,\n            name,\n            market,\n            trading_strategy,\n            symbols,\n            lookback,\n            threshold,\n            risk_per_trade,\n            max_positions,\n            timeframes,\n            volatility_window,\n            volatility_threshold,\n            is_running\n        FROM bots\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "market",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "trading_strategy",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "symbols",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "lookback",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "threshold",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 7,
+        "name": "risk_per_trade",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 8,
+        "name": "max_positions",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 9,
+        "name": "timeframes",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "volatility_window",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 11,
+        "name": "volatility_threshold",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 12,
+        "name": "is_running",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "08565ed4337838e25b0224726d50dd29264d0fbc22f7a551935fd4b7c97ae2e0"
+}
