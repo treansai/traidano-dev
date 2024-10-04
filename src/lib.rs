@@ -8,7 +8,6 @@ use opentelemetry_otlp::{ExportConfig, HttpExporterBuilder, Protocol, WithExport
 use opentelemetry_sdk::{logs, runtime, trace as sdktrace, Resource};
 use opentelemetry_sdk::trace::Config as SdkTraceConfig;
 use opentelemetry::trace::{TraceError, TracerProvider};
-use opentelemetry_prometheus::exporter;
 use opentelemetry_sdk::metrics::SdkMeterProvider;
 use opentelemetry_sdk::runtime::Tokio;
 use serde::Serialize;
