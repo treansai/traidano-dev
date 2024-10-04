@@ -108,10 +108,11 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                                 continue;
                             }
                         };
-
+                        
                         let qty = calculate_position_size(&account, last_price, config.risk_per_trade);
 
                         if qty > 0.0 {
+                            
                             let order = Order {
                                 symbol: symbol.clone(),
                                 qty: Some(qty as i32),

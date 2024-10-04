@@ -122,7 +122,7 @@ pub struct AppState {
     pub bot_manager: Mutex<BotManager>,
     pub rate_limiter: Arc<Mutex<RateLimiter>>,
     //pub tracer : BoxedTracer,
-    //pub meter : Meter
+    pub meter : Meter
 }
 
 #[cfg(test)]

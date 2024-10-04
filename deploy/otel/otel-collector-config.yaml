@@ -5,10 +5,13 @@ receivers:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
+  
 
 exporters:
   debug:
     verbosity: detailed
+
+  
 
 service:
   pipelines:
@@ -16,7 +19,7 @@ service:
       receivers: [otlp]
       exporters: [debug]
     metrics:
-      receivers: [ otlp ]
+      receivers: [ otlp]
       exporters: [ debug ]
     logs:
       receivers: [ otlp ]

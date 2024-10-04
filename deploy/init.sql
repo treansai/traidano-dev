@@ -13,3 +13,4 @@ CREATE TABLE bots (
     volatility_threshold DOUBLE PRECISION NOT NULL,
     is_running BOOLEAN DEFAULT FALSE
 );
+-- zflub$0$1$9$8$!

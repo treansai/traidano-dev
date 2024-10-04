@@ -63,6 +63,11 @@ async fn main() {
     let logger_provider = init_logs().unwrap();
     let logger_layer = OpenTelemetryTracingBridge::new(&logger_provider);
 
+    // meter
+    let meter_provider = init_metrics().unwrap();
+    global::set_meter_provider(meter_provider);
+    let meter = global::meter_with_version("basic", Some("v1.0"), Some("schema_url"), None);
+
     // filter
     let filter = EnvFilter::new("info")
         .add_directive("hyper=error".parse().unwrap())
@@ -114,7 +119,7 @@ async fn main() {
         bot_manager: Mutex::new(bot_manager),
         rate_limiter: Arc::new(Mutex::new(RateLimiter::new(200.0 / 60.0, 50.0))),
         //tracer,
-        // meter
+        meter
     };
 
     let shared_state = Arc::new(state);
