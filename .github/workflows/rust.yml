@@ -24,4 +24,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build
-      run: cargo sqlx prepare && cargo build --verbose
+      run: cargo install sqlx-cli && cargo sqlx prepare && cargo build --verbose
+    
+      
