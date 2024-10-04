@@ -14,6 +14,7 @@ env:
   STREAM_URL : https://paper-api.alpaca.markets/v2
   API_KEY : API_KEY
   SECRET_KEY : SECRETE
+  SQLX_OFFLINE: true
 
 jobs:
   build:
