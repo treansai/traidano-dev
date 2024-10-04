@@ -3,6 +3,14 @@ name = "traidano"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "traidano"
+path = "src/main.rs"
+
+[[lib]]
+name = "traidano"
+path = "src/lib.rs"
+
 [dependencies]
 axum = { version = "0.7.5" }
 axum-macros = "0.4.1"
