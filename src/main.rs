@@ -7,6 +7,7 @@ use crate::handlers::bot::{create_bot, get_bot, get_bots, remove_bot, stop_bot};
 use crate::handlers::order::{create_order, get_all_order};
 use anyhow::Context;
 use axum::handler::Handler;
+use axum::Json;
 use axum::{routing::get, routing::post, Router, ServiceExt};
 use base::{ApiConfig, Client};
 use sqlx::postgres::PgPoolOptions;
@@ -127,6 +128,8 @@ async fn main() {
 
     // the app server
     let app = Router::new()
+        // base
+        .route("/", get(base_handler))
         // account
         .route("/account", get(get_http_account))
         // orders
@@ -163,4 +166,10 @@ async fn metrics_handler() -> String {
     let metric_families = prometheus::default_registry().gather();
     encoder.encode(&metric_families, &mut buffer).unwrap();
     String::from_utf8(buffer).unwrap()
+}
+
+#[tracing::instrument]
+pub async fn base_handler() -> impl IntoResponse {
+    tracing::info!("base url reached");
+    Json("Hello Traidano").into_response()
 }

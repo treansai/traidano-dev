@@ -64,7 +64,6 @@ metadata:
 spec:
   selector:
     app: traidano
-  type: LoadBalancer
   ports:
     - name: traidano-port
       port: 9494
