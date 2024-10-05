@@ -144,11 +144,13 @@ async fn main() {
         .with_state(shared_state);
 
     // listener
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:9494")
+    let host = std::env::var("HOST").unwrap_or("0.0.0.0".to_string());
+    let port = std::env::var("PORT").unwrap_or("9494".to_string());
+    let listener = tokio::net::TcpListener::bind(format!("{}:{}", host, port))
         .await
         .unwrap();
 
-    tracing::info!("App is running");
+    info!("App is running");
     axum::serve(listener, app.into_make_service())
         .await
         .unwrap();
@@ -170,6 +172,6 @@ async fn metrics_handler() -> String {
 
 #[tracing::instrument]
 pub async fn base_handler() -> impl IntoResponse {
-    tracing::info!("base url reached");
+    info!("base url reached");
     Json("Hello Traidano").into_response()
 }

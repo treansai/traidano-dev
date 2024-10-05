@@ -8,18 +8,15 @@ metadata:
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/tags: Environment=dev
-    alb.ingress.kubernetes.io/healthcheck-path: /bots
-    alb.ingress.kubernetes.io/healthcheck-port: '9494'
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
 spec:
   ingressClassName: alb
   rules:
     - http:
         paths:
-          - pathType: Prefix
-            path: "/"
+          - path: /
+            pathType: Exact
             backend:
               service:
-                name: traidano-svc
+                name: traidano
                 port:
                   number: 9494

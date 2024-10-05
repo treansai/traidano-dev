@@ -16,6 +16,7 @@ spec:
       containers:
         - name: traidano
           image: ghcr.io/treansai/traidano:latest
+          imagePullPolicy: Always
           resources:
             limits:
               memory: "128Mi"
@@ -60,10 +61,11 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: traidano-svc
+  name: traidano
 spec:
   selector:
     app: traidano
+  type: NodePort
   ports:
     - name: traidano-port
       port: 9494
