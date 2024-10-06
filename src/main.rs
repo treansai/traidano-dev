@@ -26,7 +26,7 @@ use prometheus::{TextEncoder, Encoder};
 use serde::Serialize;
 use tokio::sync::Mutex;
 use tower_http::trace::TraceLayer;
-use tracing::info;
+use tracing::{debug, info, trace};
 use tracing::instrument::WithSubscriber;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 use traidano::{init_logs, init_metrics, init_tracer_provider};
@@ -172,6 +172,6 @@ async fn metrics_handler() -> String {
 
 #[tracing::instrument]
 pub async fn base_handler() -> impl IntoResponse {
-    info!("base url reached");
+    trace!("base url reached");
     Json("Hello Traidano").into_response()
 }

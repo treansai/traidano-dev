@@ -14,7 +14,35 @@ spec:
     - http:
         paths:
           - path: /
-            pathType: Exact
+            pathType: Prefix
+            backend:
+              service:
+                name: traidano
+                port:
+                  number: 9494
+          - path: /account
+            pathType: Prefix
+            backend:
+              service:
+                name: traidano
+                port:
+                  number: 9494
+          - path: /orders
+            pathType: Prefix
+            backend:
+              service:
+                name: traidano
+                port:
+                  number: 9494
+          - path: /bots
+            pathType: Prefix
+            backend:
+              service:
+                name: traidano
+                port:
+                  number: 9494
+          - path: /metrics
+            pathType: Prefix
             backend:
               service:
                 name: traidano
