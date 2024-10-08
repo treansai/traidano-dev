@@ -66,7 +66,7 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
     loop {
         interval.tick().await;
 
-        let should_execute = match config.market {
+        let should_execute = match &config.market {
             MarketType::Crypto => true,
             MarketType::Equity => {
                 match is_market_open(&state).await {
@@ -86,8 +86,13 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
 
         if should_execute {
             for symbol in &config.symbols {
+                let request_type = match &config.market {
+                    MarketType::Crypto => "crypto_data",
+                    MarketType::Equity => "stock_data"
+                };
+
                 // Fetch historical data
-                let bars = match get_bars(state.as_ref(), &[symbol.clone()], &config.timeframes[0], 100).await {
+                let bars = match get_bars(state.as_ref(), &[symbol.clone()], &config.timeframes[0], 100, request_type).await {
                     Ok(bars) => bars.get(symbol).unwrap().clone(),
                     Err(e) => {
                         tracing::error!("Failed to get historical data for {}: {:?}", symbol, e);

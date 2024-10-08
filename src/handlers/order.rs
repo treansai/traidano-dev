@@ -9,6 +9,7 @@ use axum_macros::debug_handler;
 use serde_json::json;
 use std::sync::Arc;
 use tracing::{error, info, instrument};
+use traidano::RequestType;
 
 #[instrument(skip(state))]
 #[debug_handler]
@@ -24,6 +25,7 @@ pub async fn create_order(
             Method::POST,
             "orders",
             Body::from(serde_json::to_string(&request).unwrap()),
+            RequestType::Order
         )
         .await
     {
@@ -60,7 +62,7 @@ pub async fn get_all_order(
 
     match state
         .alpaca_client
-        .send::<serde_json::Value>(Method::GET, url_query.as_str(), Body::empty())
+        .send::<serde_json::Value>(Method::GET, url_query.as_str(), Body::empty(), RequestType::Order)
         .await
     {
         Ok(response) => {

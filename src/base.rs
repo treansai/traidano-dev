@@ -19,6 +19,8 @@ use opentelemetry::metrics::Meter;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use tokio::sync::Mutex;
+use traidano::RequestType;
+use crate::configuration::BaseConfig;
 
 #[derive(Debug)]
 pub struct ClientBuildError;
@@ -29,8 +31,40 @@ pub struct ClientBuildError;
 pub struct ApiConfig {
     pub base_url: String,
     pub stream_url: String,
+    pub stock_data_url: String,
+    pub crypto_data_url: String,
     pub api_key: String,
     pub secret_key: String,
+}
+
+impl Default for ApiConfig {
+    fn default() -> Self {
+        Self {
+            base_url: "base_url".to_string(),
+            stream_url: "stream_url".to_string(),
+            stock_data_url: "stock_data_url".to_string(),
+            crypto_data_url: "crypto_data_url".to_string(),
+            api_key: "api_key".to_string(),
+            secret_key: "secret_key".to_string(),
+        }
+    }
+}
+
+impl ApiConfig {
+    pub fn from_base_conf(base_config: BaseConfig) -> Self {
+        Self {
+            base_url: base_config.api_config.base_url,
+            stream_url: base_config.api_config.stream_url,
+            stock_data_url: base_config.api_config.stock_data_url,
+            crypto_data_url: base_config.api_config.crypto_data_url,
+            api_key: base_config.api_config.api_key.unwrap(),
+            secret_key: base_config.api_config.secret.unwrap()
+        }
+    }
+
+    pub fn from_env_vars() -> ApiConfig {
+        todo!("Not implemented")
+    }
 }
 
 pub struct Client {
@@ -69,7 +103,7 @@ impl Client {
         ClientBuilder::new()
     }
 
-    pub async fn send<T>(&self, method: Method, path: &str, body: Body) -> Result<T, RequestError>
+    pub async fn send<T>(&self, method: Method, path: &str, body: Body, request_type: RequestType) -> Result<T, RequestError>
     where
         T: DeserializeOwned,
     {
@@ -77,7 +111,9 @@ impl Client {
         let https = HttpsConnector::new();
         let client = Client::builder(TokioExecutor::new()).build(https);
 
-        let mut full_url = self.api_config.base_url.clone();
+        // get the right url
+
+        let mut full_url = self.url_match(request_type);
         full_url.push_str(path);
 
         let req = Request::builder()
@@ -114,6 +150,14 @@ impl Client {
             Err(RequestError::ApiError(res.status()))
         }
     }
+
+    fn url_match(&self, request_type: RequestType) -> String {
+        match request_type {
+            RequestType::CryptoData => self.api_config.crypto_data_url.clone(),
+            RequestType::StockData => self.api_config.stock_data_url.clone(),
+            RequestType::Order => self.api_config.base_url.clone()
+        }
+    }
 }
 
 pub struct AppState {
@@ -127,13 +171,24 @@ pub struct AppState {
 
 #[cfg(test)]
 mod tests {
+    use axum_macros::FromRequest;
     use super::*;
+    use mockito;
+    use serde::{Deserialize, Serialize};
+
+
+    #[derive(Deserialize, Debug, Serialize, PartialEq, Eq)]
+    struct TestResponse {
+        message: String
+    }
 
     #[test]
     fn create_client() {
         let api_config = ApiConfig {
             base_url: "base".to_string(),
             stream_url: "".to_string(),
+            stock_data_url: "".to_string(),
+            crypto_data_url: "".to_string(),
             api_key: "key".to_string(),
             secret_key: "secret".to_string(),
         };
@@ -141,5 +196,36 @@ mod tests {
         let client = Client::builder().config(api_config.clone()).build();
 
         assert_eq!(client.unwrap().api_config, api_config)
+    }
+
+    #[tokio::test]
+    async fn test_send_success() {
+        let mut mock_server = mockito::Server::new();
+        let mock_url = mock_server.url();
+
+        let api_config = ApiConfig {
+            base_url: mock_url,
+            ..ApiConfig::default()
+        };
+
+
+        // mock successful response
+        let _m = mock_server.mock("GET", "/test-endpoint")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{'message': 'Success'"#)
+            .create();
+
+        let client =  Client {api_config};
+        let res: Result<TestResponse, RequestError> 
+            = client.send(Method::GET, "/test-endpoint", Body::empty(), RequestType::Order)
+            .await;
+
+        assert!(res.is_ok());
+        assert_eq!(
+            res.unwrap(),
+            TestResponse {message:"Success".to_string()}
+        );
+        
     }
 }

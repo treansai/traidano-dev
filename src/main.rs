@@ -85,14 +85,18 @@ async fn main() {
 
 
     // Get vars
-    let base_url = std::env::var("BASE_URL").expect("BASE_URL must be set");
-    let stream_url = std::env::var("STREAM_URL").expect("STREAM_URL must be set");
-    let api_key = std::env::var("API_KEY").expect("API_KEY must be set");
-    let secret_key = std::env::var("SECRET_KEY").expect("SECRET_KEY must be set");
+    let base_url = std::env::var("BASE_URL").unwrap_or("https://paper-api.alpaca.markets/v2/".to_string());
+    let stream_url = std::env::var("STREAM_URL").unwrap_or("https://paper-api.alpaca.markets/v2/".to_string());
+    let stock_data_url = std::env::var("STOCK_DATA_URL").unwrap_or("https://data.alpaca.markets/v2/stocks".to_string());
+    let crypto_data_url = std::env::var("CRYPTO_DATA_URL").unwrap_or("https://data.alpaca.markets/v1beta3/crypto/".to_string());
+    let api_key = std::env::var("API_KEY").unwrap_or("PKYPUBQDT5X9WO1ZJF9O".to_string());
+    let secret_key = std::env::var("SECRET_KEY").unwrap_or("QBTXA5FvMRTCbmmw8u3Nj7HaYoC1HwUD8tXg5aym".to_string());
 
     let api_config = ApiConfig {
         base_url,
         stream_url,
+        stock_data_url,
+        crypto_data_url,
         api_key,
         secret_key,
     };
@@ -101,7 +105,7 @@ async fn main() {
     let client = Client::builder().config(api_config).build().unwrap();
 
     // postgres pool
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let database_url = std::env::var("DATABASE_URL").unwrap_or("postgresql://postgres:postgres@localhost:5432/postgres".to_string());
     let db = PgPoolOptions::new()
         .max_connections(20)
         .connect(&database_url)

@@ -18,7 +18,7 @@ use crate::bot::strategies::should_execute;
 /// This is a mean reversion bot for both crypto and equity markets
 pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
     // checking interval in sec (every 1min)
-    let mut interval = interval(Duration::from_secs(60));
+    let mut interval = interval(Duration::from_secs(100));
 
     loop {
         interval.tick().await;
@@ -31,12 +31,18 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
         if should_execute {
             let mut all_signals = HashMap::new();
 
+            let request_type = match &config.market {
+                MarketType::Crypto => "crypto_data",
+                MarketType::Equity => "stock_data"
+            };
+
             for timeframe in &config.timeframes {
                 match get_bars(
                     state.as_ref(),
                     &config.symbols,
                     timeframe,
                     config.lookback.max(config.volatility_window),
+                    request_type
                 )
                     .await
                 {
@@ -101,7 +107,11 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                     if (side == Side::Buy && current_position <= 0.0)
                         || (side == Side::Sell && current_position >= 0.0)
                     {
-                        let last_price = match get_bars(&state, &[symbol.clone()], "1Min", 1).await {
+                        let request_type = match &config.market {
+                            MarketType::Crypto => "crypto_data",
+                            MarketType::Equity => "stock_data"
+                        };
+                        let last_price = match get_bars(&state, &[symbol.clone()], "1Min", 1, request_type).await {
                             Ok(bars) => bars[&symbol][0].close_price,
                             Err(e) => {
                                 tracing::error!("Failed to get current price for {}: {:?}", symbol, e);

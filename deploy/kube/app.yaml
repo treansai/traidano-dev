@@ -41,9 +41,9 @@ spec:
             - name: OTLP_ENDPOINT
               value: "http://otel-collector.observers.svc.cluster.local:4318"
             - name: BASE_URL
-              value: "https://paper-api.alpaca.markets/v2"
+              value: "https://paper-api.alpaca.markets/v2/"
             - name: STREAM_URL
-              value: "https://paper-api.alpaca.markets/v2"
+              value: "https://paper-api.alpaca.markets/v2/"
             - name: API_KEY
               valueFrom:
                 secretKeyRef:

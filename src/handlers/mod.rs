@@ -5,6 +5,7 @@ use axum::http::{Method, StatusCode};
 use axum::response::{IntoResponse, Response};
 use serde::de::{DeserializeOwned, StdError};
 use std::sync::{Arc, Mutex};
+use traidano::RequestType;
 
 pub mod account;
 pub mod bar;
@@ -17,6 +18,7 @@ pub async fn rate_limited_request<T>(
     method: Method,
     path: &str,
     body: Body,
+    request_type: RequestType
 ) -> Result<T, RequestError>
 where
     T: DeserializeOwned,
@@ -28,7 +30,7 @@ where
     drop(guard);
 
     // Send the request using the Alpaca client
-    app_state.alpaca_client.send::<T>(method, path, body).await
+    app_state.alpaca_client.send::<T>(method, path, body, request_type).await
 }
 
 impl IntoResponse for RequestError {

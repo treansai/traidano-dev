@@ -8,16 +8,19 @@ use std::fmt;
 use std::fmt::{write, Formatter};
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
+use crate::bot::strategies::smart_money::smart_money_strategy;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum BotStrategy {
     MeanReversion,
+    SmartMoney
 }
 
 impl fmt::Display for BotStrategy {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match *self {
             BotStrategy::MeanReversion => write!(f, "MeanReversion"),
+            BotStrategy::SmartMoney => write!(f, "SmartMoney")
         }
     }
 }
@@ -28,6 +31,7 @@ impl FromStr for BotStrategy {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "MeanReversion" => Ok(BotStrategy::MeanReversion),
+            "SmartMoney" => Ok(BotStrategy::SmartMoney),
             _ => Err(()),
         }
     }
@@ -91,7 +95,7 @@ impl Bot {
         let handle = tokio::spawn(async move {
             match config.trading_strategy {
                 BotStrategy::MeanReversion => mean_reversion_strategy(state, config).await,
-                _ => (),
+                BotStrategy::SmartMoney => smart_money_strategy(state, config).await,
             }
         });
         self.handle = Some(handle);

@@ -10,12 +10,13 @@ use axum::Json;
 use serde::de::DeserializeOwned;
 use std::sync::Arc;
 use tracing::instrument;
+use traidano::RequestType;
 
 async fn rate_limited_get_account<T>(state: &Arc<AppState>) -> Result<T, RequestError>
 where
     T: DeserializeOwned,
 {
-    rate_limited_request::<T>(state, Method::GET, "account", Body::empty()).await
+    rate_limited_request::<T>(state, Method::GET, "account", Body::empty(), RequestType::Order).await
 }
 
 #[instrument(skip(state))]

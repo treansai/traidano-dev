@@ -38,8 +38,12 @@ pub async fn moving_average_strategy(state: Arc<AppState>, config: BotConfig) {
         };
 
         if should_execute {
+            let request_type = match &config.market {
+                MarketType::Crypto => "crypto_data",
+                MarketType::Equity => "stock_data"
+            };
             // Get historical data for all symbols
-            let all_bars = match get_bars(state.as_ref(), &config.symbols, &config.timeframes[0], 50).await {
+            let all_bars = match get_bars(state.as_ref(), &config.symbols, &config.timeframes[0], 50, request_type).await {
                 Ok(bars) => bars,
                 Err(e) => {
                     tracing::error!("Failed to get historical data: {:?}", e);

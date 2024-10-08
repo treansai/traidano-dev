@@ -15,6 +15,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::interval;
+use traidano::RequestType;
 
 /// This is a mean reversion bot
 pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
@@ -39,6 +40,7 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                             &config.symbols,
                             timeframe,
                             config.lookback.max(config.volatility_window),
+                            "crypto_data"
                         )
                             .await
                         {
@@ -96,7 +98,7 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                                 || (side == Side::Sell && current_position >= 0.0)
                             {
                                 let last_price =
-                                    match get_bars(&state, &[symbol.clone()], "1Min", 1).await {
+                                    match get_bars(&state, &[symbol.clone()], "1Min", 1, "crypto_data").await {
                                         Ok(bars) => bars[&symbol][0].close_price,
                                         Err(e) => {
                                             tracing::error!(

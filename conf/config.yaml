@@ -1,4 +1,8 @@
 api-config:
-  api_key: PKGA4DTIP5MZM8H0KQJL
-  secret: bEBazJLr2BdbyKDLNMPQKrSxGzwELRBYGICg5Jh1
-  base_url: https://paper-api.alpaca.markets/v2
+  api_key: api_key
+  secret: secret
+  base_url: base_url
+  stream_url: stream
+  stock_data_url: stock_data_url
+  crypto_data_url: crypto_data_url
+  forex_data_url: forex_data_url

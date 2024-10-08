@@ -6,7 +6,7 @@ use crate::handlers::market::is_market_open;
 
 pub mod mean_reversion;
 mod moving_avarage;
-mod smart_money;
+pub mod smart_money;
 mod oth;
 
 async fn should_execute(state: &Arc<AppState>, config: &BotConfig) -> Option<bool> {
