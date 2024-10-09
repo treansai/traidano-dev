@@ -48,6 +48,7 @@ pub async fn moving_average_strategy(state: Arc<AppState>, config: BotConfig) {
                 &config.symbols,
                 &config.timeframes[0],
                 50,
+                config.volatility_window,
                 request_type,
             )
             .await

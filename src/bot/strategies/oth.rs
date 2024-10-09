@@ -40,6 +40,7 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                             &config.symbols,
                             timeframe,
                             config.lookback.max(config.volatility_window),
+                            config.volatility_window,
                             "crypto_data",
                         )
                         .await
@@ -102,6 +103,7 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                                     &[symbol.clone()],
                                     "1Min",
                                     1,
+                                    config.volatility_window,
                                     "crypto_data",
                                 )
                                 .await

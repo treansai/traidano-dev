@@ -4,6 +4,7 @@ use crate::handlers::rate_limited_request;
 use crate::models::bar::Bar;
 use axum::body::Body;
 use axum::http::{Method, StatusCode};
+use chrono::{Duration, Utc};
 use std::collections::HashMap;
 use traidano::RequestType;
 
@@ -12,9 +13,11 @@ pub async fn get_bars(
     symbols: &[String],
     timeframe: &str,
     limit: usize,
+    volatility_window: usize,
     request_type: &str,
 ) -> Result<HashMap<String, Vec<Bar>>, RequestError> {
     let request_type = RequestType::from(request_type);
+    let start_date = (chrono::Utc::now() - Duration::days(volatility_window as i64)).format("%Y-%m-%dT%H:%M:%SZ").to_string();
     match request_type {
         RequestType::Order => {
             tracing::error!("Cannot get bar of historical data from order query type");
@@ -24,11 +27,11 @@ pub async fn get_bars(
             let symbols_str = symbols.join(",");
             let path = match &request_type {
                 RequestType::StockData => {
-                    format!("bars/{}?symbols={}&limit={}", timeframe, symbols_str, limit)
+                    format!("bars/{}?symbols={}&limit={}&start={}&sort=desc", timeframe, symbols_str, limit, start_date)
                 }
                 RequestType::CryptoData => format!(
-                    "us/bars?symbols={}&timeframe={}&limit={}",
-                    symbols_str, timeframe, limit
+                    "us/bars?symbols={}&timeframe={}&limit={}&start={}&sort=desc",
+                    symbols_str, timeframe, limit, start_date
                 ),
                 _ => "".to_string(),
             };

@@ -93,7 +93,8 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                     state.as_ref(),
                     &[symbol.clone()],
                     &config.timeframes[0],
-                    &config.lookback.max(&config.volatility_window),
+                    config.lookback.max(config.volatility_window),
+                    config.volatility_window,
                     request_type,
                 )
                 .await
