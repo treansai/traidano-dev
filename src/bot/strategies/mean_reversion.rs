@@ -1,4 +1,5 @@
 use crate::base::AppState;
+use crate::bot::strategies::should_execute;
 use crate::bot::{BotConfig, MarketType};
 use crate::core::functions::calculate_position_size;
 use crate::handlers::account::get_account;
@@ -13,7 +14,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::interval;
-use crate::bot::strategies::should_execute;
 
 /// This is a mean reversion bot for both crypto and equity markets
 pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
@@ -33,7 +33,7 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
 
             let request_type = match &config.market {
                 MarketType::Crypto => "crypto_data",
-                MarketType::Equity => "stock_data"
+                MarketType::Equity => "stock_data",
             };
 
             for timeframe in &config.timeframes {
@@ -42,9 +42,9 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                     &config.symbols,
                     timeframe,
                     config.lookback.max(config.volatility_window),
-                    request_type
+                    request_type,
                 )
-                    .await
+                .await
                 {
                     Ok(all_bars) => {
                         for (symbol, bars) in all_bars {
@@ -70,11 +70,9 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                                 .or_insert(signal);
                         }
                     }
-                    Err(e) => tracing::error!(
-                        "Failed to get bars for timeframe {}: {:?}",
-                        timeframe,
-                        e
-                    ),
+                    Err(e) => {
+                        tracing::error!("Failed to get bars for timeframe {}: {:?}", timeframe, e)
+                    }
                 }
             }
 
@@ -109,20 +107,32 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                     {
                         let request_type = match &config.market {
                             MarketType::Crypto => "crypto_data",
-                            MarketType::Equity => "stock_data"
+                            MarketType::Equity => "stock_data",
                         };
-                        let last_price = match get_bars(&state, &[symbol.clone()], "1Min", 1, request_type).await {
+                        let last_price = match get_bars(
+                            &state,
+                            &[symbol.clone()],
+                            "1Min",
+                            1,
+                            request_type,
+                        )
+                        .await
+                        {
                             Ok(bars) => bars[&symbol][0].close_price,
                             Err(e) => {
-                                tracing::error!("Failed to get current price for {}: {:?}", symbol, e);
+                                tracing::error!(
+                                    "Failed to get current price for {}: {:?}",
+                                    symbol,
+                                    e
+                                );
                                 continue;
                             }
                         };
-                        
-                        let qty = calculate_position_size(&account, last_price, config.risk_per_trade);
+
+                        let qty =
+                            calculate_position_size(&account, last_price, config.risk_per_trade);
 
                         if qty > 0.0 {
-                            
                             let order = Order {
                                 symbol: symbol.clone(),
                                 qty: Some(qty as i32),
@@ -138,12 +148,7 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                             };
 
                             create_order(State(state.clone()), Json(order)).await;
-                            tracing::info!(
-                                        "Order placed: {:?} {} shares of {}",
-                                        side,
-                                        qty,
-                                        symbol
-                                    );
+                            tracing::info!("Order placed: {:?} {} shares of {}", side, qty, symbol);
                         }
                     }
                 }

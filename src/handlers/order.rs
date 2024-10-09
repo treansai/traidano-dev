@@ -25,7 +25,7 @@ pub async fn create_order(
             Method::POST,
             "orders",
             Body::from(serde_json::to_string(&request).unwrap()),
-            RequestType::Order
+            RequestType::Order,
         )
         .await
     {
@@ -62,7 +62,12 @@ pub async fn get_all_order(
 
     match state
         .alpaca_client
-        .send::<serde_json::Value>(Method::GET, url_query.as_str(), Body::empty(), RequestType::Order)
+        .send::<serde_json::Value>(
+            Method::GET,
+            url_query.as_str(),
+            Body::empty(),
+            RequestType::Order,
+        )
         .await
     {
         Ok(response) => {

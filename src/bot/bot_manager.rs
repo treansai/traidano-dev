@@ -24,7 +24,8 @@ impl BotManager {
                     if bot_info.clone().is_running {
                         tracing::info!("Initializing bot {} ...", &bot_info.config.id);
 
-                        self.create_bot(bot_info.config.clone(), app_state.clone()).await;
+                        self.create_bot(bot_info.config.clone(), app_state.clone())
+                            .await;
 
                         tracing::info!("Bot initialized");
                     } else {

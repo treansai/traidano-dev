@@ -46,11 +46,10 @@ fn detect_volume_anomaly(volumes: &[f64], threshold: f64) -> bool {
 
 // Function to analyze order flow
 fn analyze_order_flow(data: &[MarketData], window: usize) -> bool {
-    let price_changes: Vec<f64> = data.windows(2)
-        .map(|w| w[1].price - w[0].price)
-        .collect();
+    let price_changes: Vec<f64> = data.windows(2).map(|w| w[1].price - w[0].price).collect();
 
-    let volume_weighted_price_changes: Vec<f64> = data.windows(2)
+    let volume_weighted_price_changes: Vec<f64> = data
+        .windows(2)
         .map(|w| (w[1].price - w[0].price) * w[1].volume)
         .collect();
 
@@ -68,31 +67,37 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
 
         let should_execute = match &config.market {
             MarketType::Crypto => true,
-            MarketType::Equity => {
-                match is_market_open(&state).await {
-                    Ok(true) => true,
-                    Ok(false) => {
-                        tracing::info!("Equity market is closed. Waiting for next check.");
-                        tokio::time::sleep(Duration::from_secs(3600)).await;
-                        continue;
-                    }
-                    Err(e) => {
-                        tracing::error!("Failed to check if market is open: {:?}", e);
-                        continue;
-                    }
+            MarketType::Equity => match is_market_open(&state).await {
+                Ok(true) => true,
+                Ok(false) => {
+                    tracing::info!("Equity market is closed. Waiting for next check.");
+                    tokio::time::sleep(Duration::from_secs(3600)).await;
+                    continue;
                 }
-            }
+                Err(e) => {
+                    tracing::error!("Failed to check if market is open: {:?}", e);
+                    continue;
+                }
+            },
         };
 
         if should_execute {
             for symbol in &config.symbols {
                 let request_type = match &config.market {
                     MarketType::Crypto => "crypto_data",
-                    MarketType::Equity => "stock_data"
+                    MarketType::Equity => "stock_data",
                 };
 
                 // Fetch historical data
-                let bars = match get_bars(state.as_ref(), &[symbol.clone()], &config.timeframes[0], 100, request_type).await {
+                let bars = match get_bars(
+                    state.as_ref(),
+                    &[symbol.clone()],
+                    &config.timeframes[0],
+                    &config.lookback.max(&config.volatility_window),
+                    request_type,
+                )
+                .await
+                {
                     Ok(bars) => bars.get(symbol).unwrap().clone(),
                     Err(e) => {
                         tracing::error!("Failed to get historical data for {}: {:?}", symbol, e);
@@ -107,7 +112,13 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
 
                 let prices: Vec<f64> = bars.iter().map(|bar| bar.close_price).collect();
                 let volumes: Vec<f64> = bars.iter().map(|bar| bar.volume as f64).collect();
-                let market_data: Vec<MarketData> = bars.iter().map(|bar| MarketData { price: bar.close_price, volume: bar.volume as f64 }).collect();
+                let market_data: Vec<MarketData> = bars
+                    .iter()
+                    .map(|bar| MarketData {
+                        price: bar.close_price,
+                        volume: bar.volume as f64,
+                    })
+                    .collect();
 
                 // Identify support and resistance
                 let (support, resistance) = identify_support_resistance(&prices, 20);
@@ -138,10 +149,18 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                     }
                 };
 
-                let current_position = positions.iter().find(|p| p.symbol == *symbol).map(|p| p.qty).unwrap_or(0.0);
+                let current_position = positions
+                    .iter()
+                    .find(|p| p.symbol == *symbol)
+                    .map(|p| p.qty)
+                    .unwrap_or(0.0);
 
                 // Trading logic
-                if last_price <= support && volume_anomaly && bullish_order_flow && current_position <= 0.0 {
+                if last_price <= support
+                    && volume_anomaly
+                    && bullish_order_flow
+                    && current_position <= 0.0
+                {
                     // Potential smart money accumulation, consider buying
                     let qty = calculate_position_size(&account, last_price, config.risk_per_trade);
 
@@ -159,7 +178,11 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                         create_order(State(state.clone()), Json(order)).await;
                         tracing::info!("Buy order placed: {} shares of {}", qty, symbol);
                     }
-                } else if last_price >= resistance && volume_anomaly && !bullish_order_flow && current_position >= 0.0 {
+                } else if last_price >= resistance
+                    && volume_anomaly
+                    && !bullish_order_flow
+                    && current_position >= 0.0
+                {
                     // Potential smart money distribution, consider selling
                     let qty = calculate_position_size(&account, last_price, config.risk_per_trade);
 
@@ -173,7 +196,7 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                             limit_price: Some((last_price * 0.999) as i32),
                             ..Order::default()
                         };
-                        create_order(State(state.clone()), Json(order)).await ;
+                        create_order(State(state.clone()), Json(order)).await;
                         tracing::info!("Sell order placed: {} shares of {}", qty, symbol);
                     }
                 }

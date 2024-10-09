@@ -2,38 +2,37 @@
 use crate::base::AppState;
 use crate::bot::bot_manager::BotManager;
 use crate::core::rate_limiter::RateLimiter;
-use crate::handlers::account::{get_http_account};
+use crate::handlers::account::get_http_account;
 use crate::handlers::bot::{create_bot, get_bot, get_bots, remove_bot, stop_bot};
 use crate::handlers::order::{create_order, get_all_order};
 use anyhow::Context;
 use axum::handler::Handler;
+use axum::response::IntoResponse;
 use axum::Json;
 use axum::{routing::get, routing::post, Router, ServiceExt};
 use base::{ApiConfig, Client};
-use sqlx::postgres::PgPoolOptions;
-use tracing_opentelemetry::OpenTelemetryLayer;
-use std::sync::Arc;
-use axum::response::IntoResponse;
-use opentelemetry::{global, KeyValue};
+use opentelemetry::metrics::MeterProvider;
+use opentelemetry::trace::TracerProvider;
 use opentelemetry::trace::{TraceContextExt, Tracer, TracerProvider as _};
-use opentelemetry::trace::{TracerProvider};
-use opentelemetry::{metrics::MeterProvider};
+use opentelemetry::{global, KeyValue};
 use opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge;
-use opentelemetry_otlp::{WithExportConfig};
-use opentelemetry_sdk::metrics::SdkMeterProvider;
+use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_prometheus::exporter as prometheus_exporter;
-use prometheus::{TextEncoder, Encoder};
+use opentelemetry_sdk::metrics::SdkMeterProvider;
+use opentelemetry_stdout as stdout;
+use prometheus::{Encoder, TextEncoder};
 use serde::Serialize;
+use sqlx::postgres::PgPoolOptions;
+use std::sync::Arc;
 use tokio::sync::Mutex;
 use tower_http::trace::TraceLayer;
-use tracing::{debug, info, trace};
 use tracing::instrument::WithSubscriber;
+use tracing::{debug, info, trace};
+use tracing::{error, span};
+use tracing_opentelemetry::OpenTelemetryLayer;
+use tracing_subscriber::{fmt, Registry};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 use traidano::{init_logs, init_metrics, init_tracer_provider};
-use opentelemetry_stdout as stdout;
-use tracing::{error, span};
-use tracing_subscriber::{fmt, Registry};
-
 
 pub mod base;
 pub mod bot;
@@ -76,21 +75,24 @@ async fn main() {
         .add_directive("reqwest=error".parse().unwrap());
 
     tracing_subscriber::registry()
-    .with(telemetry)
-    .with(logger_layer)
-    .with(fmt::Layer::default())
-    .with(filter)
-    .init();
-
-
+        .with(telemetry)
+        .with(logger_layer)
+        .with(fmt::Layer::default())
+        .with(filter)
+        .init();
 
     // Get vars
-    let base_url = std::env::var("BASE_URL").unwrap_or("https://paper-api.alpaca.markets/v2/".to_string());
-    let stream_url = std::env::var("STREAM_URL").unwrap_or("https://paper-api.alpaca.markets/v2/".to_string());
-    let stock_data_url = std::env::var("STOCK_DATA_URL").unwrap_or("https://data.alpaca.markets/v2/stocks".to_string());
-    let crypto_data_url = std::env::var("CRYPTO_DATA_URL").unwrap_or("https://data.alpaca.markets/v1beta3/crypto/".to_string());
+    let base_url =
+        std::env::var("BASE_URL").unwrap_or("https://paper-api.alpaca.markets/v2/".to_string());
+    let stream_url =
+        std::env::var("STREAM_URL").unwrap_or("https://paper-api.alpaca.markets/v2/".to_string());
+    let stock_data_url = std::env::var("STOCK_DATA_URL")
+        .unwrap_or("https://data.alpaca.markets/v2/stocks".to_string());
+    let crypto_data_url = std::env::var("CRYPTO_DATA_URL")
+        .unwrap_or("https://data.alpaca.markets/v1beta3/crypto/".to_string());
     let api_key = std::env::var("API_KEY").unwrap_or("PKYPUBQDT5X9WO1ZJF9O".to_string());
-    let secret_key = std::env::var("SECRET_KEY").unwrap_or("QBTXA5FvMRTCbmmw8u3Nj7HaYoC1HwUD8tXg5aym".to_string());
+    let secret_key = std::env::var("SECRET_KEY")
+        .unwrap_or("QBTXA5FvMRTCbmmw8u3Nj7HaYoC1HwUD8tXg5aym".to_string());
 
     let api_config = ApiConfig {
         base_url,
@@ -105,7 +107,8 @@ async fn main() {
     let client = Client::builder().config(api_config).build().unwrap();
 
     // postgres pool
-    let database_url = std::env::var("DATABASE_URL").unwrap_or("postgresql://postgres:postgres@localhost:5432/postgres".to_string());
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or("postgresql://postgres:postgres@localhost:5432/postgres".to_string());
     let db = PgPoolOptions::new()
         .max_connections(20)
         .connect(&database_url)
@@ -113,7 +116,8 @@ async fn main() {
         .map_err(|e| {
             eprintln!("Failed to connect to the database: {}", e);
             std::process::exit(1);
-        }).unwrap();
+        })
+        .unwrap();
 
     let mut bot_manager = BotManager::new();
 
@@ -124,11 +128,16 @@ async fn main() {
         bot_manager: Mutex::new(bot_manager),
         rate_limiter: Arc::new(Mutex::new(RateLimiter::new(200.0 / 60.0, 50.0))),
         //tracer,
-        meter
+        meter,
     };
 
     let shared_state = Arc::new(state);
-    shared_state.bot_manager.lock().await.init(&db, shared_state.clone()).await;
+    shared_state
+        .bot_manager
+        .lock()
+        .await
+        .init(&db, shared_state.clone())
+        .await;
 
     // the app server
     let app = Router::new()
@@ -161,10 +170,7 @@ async fn main() {
 
     global::shutdown_tracer_provider();
     logger_provider.shutdown().unwrap();
-
 }
-
-
 
 async fn metrics_handler() -> String {
     let mut buffer = Vec::new();

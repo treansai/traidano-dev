@@ -40,9 +40,9 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                             &config.symbols,
                             timeframe,
                             config.lookback.max(config.volatility_window),
-                            "crypto_data"
+                            "crypto_data",
                         )
-                            .await
+                        .await
                         {
                             Ok(all_bars) => {
                                 for (symbol, bars) in all_bars {
@@ -97,18 +97,25 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                             if (side == Side::Buy && current_position <= 0.0)
                                 || (side == Side::Sell && current_position >= 0.0)
                             {
-                                let last_price =
-                                    match get_bars(&state, &[symbol.clone()], "1Min", 1, "crypto_data").await {
-                                        Ok(bars) => bars[&symbol][0].close_price,
-                                        Err(e) => {
-                                            tracing::error!(
-                                                "Failed to get current price for {}: {:?}",
-                                                symbol,
-                                                e
-                                            );
-                                            continue;
-                                        }
-                                    };
+                                let last_price = match get_bars(
+                                    &state,
+                                    &[symbol.clone()],
+                                    "1Min",
+                                    1,
+                                    "crypto_data",
+                                )
+                                .await
+                                {
+                                    Ok(bars) => bars[&symbol][0].close_price,
+                                    Err(e) => {
+                                        tracing::error!(
+                                            "Failed to get current price for {}: {:?}",
+                                            symbol,
+                                            e
+                                        );
+                                        continue;
+                                    }
+                                };
 
                                 let qty = calculate_position_size(
                                     &account,

@@ -1,4 +1,5 @@
 use crate::base::AppState;
+use crate::bot::strategies::should_execute;
 use crate::bot::{BotConfig, MarketType};
 use crate::core::functions::calculate_position_size;
 use crate::handlers::account::get_account;
@@ -12,10 +13,9 @@ use axum::Json;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::time::interval;
 use ta::indicators::ExponentialMovingAverage;
 use ta::Next;
-use crate::bot::strategies::should_execute;
+use tokio::time::interval;
 
 pub async fn moving_average_strategy(state: Arc<AppState>, config: BotConfig) {
     let mut interval = interval(Duration::from_secs(60));
@@ -40,10 +40,18 @@ pub async fn moving_average_strategy(state: Arc<AppState>, config: BotConfig) {
         if should_execute {
             let request_type = match &config.market {
                 MarketType::Crypto => "crypto_data",
-                MarketType::Equity => "stock_data"
+                MarketType::Equity => "stock_data",
             };
             // Get historical data for all symbols
-            let all_bars = match get_bars(state.as_ref(), &config.symbols, &config.timeframes[0], 50, request_type).await {
+            let all_bars = match get_bars(
+                state.as_ref(),
+                &config.symbols,
+                &config.timeframes[0],
+                50,
+                request_type,
+            )
+            .await
+            {
                 Ok(bars) => bars,
                 Err(e) => {
                     tracing::error!("Failed to get historical data: {:?}", e);
@@ -122,7 +130,7 @@ pub async fn moving_average_strategy(state: Arc<AppState>, config: BotConfig) {
                             ..Order::default()
                         };
 
-                        create_order(State(state.clone()), Json(order)).await ;
+                        create_order(State(state.clone()), Json(order)).await;
                         tracing::info!("Sell order placed: {} shares of {}", qty, symbol);
                     }
                 }
@@ -130,4 +138,3 @@ pub async fn moving_average_strategy(state: Arc<AppState>, config: BotConfig) {
         }
     }
 }
-

@@ -16,7 +16,14 @@ async fn rate_limited_get_account<T>(state: &Arc<AppState>) -> Result<T, Request
 where
     T: DeserializeOwned,
 {
-    rate_limited_request::<T>(state, Method::GET, "account", Body::empty(), RequestType::Order).await
+    rate_limited_request::<T>(
+        state,
+        Method::GET,
+        "account",
+        Body::empty(),
+        RequestType::Order,
+    )
+    .await
 }
 
 #[instrument(skip(state))]

@@ -3,24 +3,24 @@ mod strategies;
 
 use crate::base::{AppState, Client};
 use crate::bot::strategies::mean_reversion::mean_reversion_strategy;
+use crate::bot::strategies::smart_money::smart_money_strategy;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::{write, Formatter};
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
-use crate::bot::strategies::smart_money::smart_money_strategy;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum BotStrategy {
     MeanReversion,
-    SmartMoney
+    SmartMoney,
 }
 
 impl fmt::Display for BotStrategy {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match *self {
             BotStrategy::MeanReversion => write!(f, "MeanReversion"),
-            BotStrategy::SmartMoney => write!(f, "SmartMoney")
+            BotStrategy::SmartMoney => write!(f, "SmartMoney"),
         }
     }
 }

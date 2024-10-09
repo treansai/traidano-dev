@@ -18,7 +18,7 @@ pub async fn rate_limited_request<T>(
     method: Method,
     path: &str,
     body: Body,
-    request_type: RequestType
+    request_type: RequestType,
 ) -> Result<T, RequestError>
 where
     T: DeserializeOwned,
@@ -30,7 +30,10 @@ where
     drop(guard);
 
     // Send the request using the Alpaca client
-    app_state.alpaca_client.send::<T>(method, path, body, request_type).await
+    app_state
+        .alpaca_client
+        .send::<T>(method, path, body, request_type)
+        .await
 }
 
 impl IntoResponse for RequestError {

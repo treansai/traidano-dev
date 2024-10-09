@@ -1,4 +1,5 @@
 use crate::bot::bot_manager::BotManager;
+use crate::configuration::BaseConfig;
 use crate::core::rate_limiter::RateLimiter;
 use crate::error::Error;
 use crate::error::RequestError;
@@ -10,17 +11,16 @@ use hyper_tls::HttpsConnector;
 use hyper_util::client::legacy::connect::HttpConnector;
 use hyper_util::rt::TokioIo;
 use native_tls::TlsConnector;
+use opentelemetry::global::BoxedTracer;
+use opentelemetry::metrics::Meter;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::sync::Arc;
-use opentelemetry::global::BoxedTracer;
-use opentelemetry::metrics::Meter;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use tokio::sync::Mutex;
 use traidano::RequestType;
-use crate::configuration::BaseConfig;
 
 #[derive(Debug)]
 pub struct ClientBuildError;
@@ -58,7 +58,7 @@ impl ApiConfig {
             stock_data_url: base_config.api_config.stock_data_url,
             crypto_data_url: base_config.api_config.crypto_data_url,
             api_key: base_config.api_config.api_key.unwrap(),
-            secret_key: base_config.api_config.secret.unwrap()
+            secret_key: base_config.api_config.secret.unwrap(),
         }
     }
 
@@ -103,7 +103,13 @@ impl Client {
         ClientBuilder::new()
     }
 
-    pub async fn send<T>(&self, method: Method, path: &str, body: Body, request_type: RequestType) -> Result<T, RequestError>
+    pub async fn send<T>(
+        &self,
+        method: Method,
+        path: &str,
+        body: Body,
+        request_type: RequestType,
+    ) -> Result<T, RequestError>
     where
         T: DeserializeOwned,
     {
@@ -155,7 +161,7 @@ impl Client {
         match request_type {
             RequestType::CryptoData => self.api_config.crypto_data_url.clone(),
             RequestType::StockData => self.api_config.stock_data_url.clone(),
-            RequestType::Order => self.api_config.base_url.clone()
+            RequestType::Order => self.api_config.base_url.clone(),
         }
     }
 }
@@ -166,20 +172,19 @@ pub struct AppState {
     pub bot_manager: Mutex<BotManager>,
     pub rate_limiter: Arc<Mutex<RateLimiter>>,
     //pub tracer : BoxedTracer,
-    pub meter : Meter
+    pub meter: Meter,
 }
 
 #[cfg(test)]
 mod tests {
-    use axum_macros::FromRequest;
     use super::*;
+    use axum_macros::FromRequest;
     use mockito;
     use serde::{Deserialize, Serialize};
 
-
     #[derive(Deserialize, Debug, Serialize, PartialEq, Eq)]
     struct TestResponse {
-        message: String
+        message: String,
     }
 
     #[test]
@@ -208,24 +213,30 @@ mod tests {
             ..ApiConfig::default()
         };
 
-
         // mock successful response
-        let _m = mock_server.mock("GET", "/test-endpoint")
+        let _m = mock_server
+            .mock("GET", "/test-endpoint")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(r#"{'message': 'Success'"#)
             .create();
 
-        let client =  Client {api_config};
-        let res: Result<TestResponse, RequestError> 
-            = client.send(Method::GET, "/test-endpoint", Body::empty(), RequestType::Order)
+        let client = Client { api_config };
+        let res: Result<TestResponse, RequestError> = client
+            .send(
+                Method::GET,
+                "/test-endpoint",
+                Body::empty(),
+                RequestType::Order,
+            )
             .await;
 
         assert!(res.is_ok());
         assert_eq!(
             res.unwrap(),
-            TestResponse {message:"Success".to_string()}
+            TestResponse {
+                message: "Success".to_string()
+            }
         );
-        
     }
 }

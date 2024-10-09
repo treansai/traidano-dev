@@ -86,7 +86,7 @@ pub async fn get_bots(State(state): State<Arc<AppState>>) -> impl IntoResponse {
 
     // len bot
     let n_bots = bot_infos.clone().len();
-    tracing::info!("{} bot{} found", n_bots, if n_bots > 0 {"s"} else {""} );
+    tracing::info!("{} bot{} found", n_bots, if n_bots > 0 { "s" } else { "" });
 
     Json(bot_infos)
 }

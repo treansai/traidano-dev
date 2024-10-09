@@ -24,7 +24,12 @@ pub struct ApiConfig {
 /// Build the configuration of the api
 pub fn build_config() -> Result<BaseConfig, ConfigError> {
     let base_path = std::env::var("CONF_DIR").unwrap_or(
-        std::env::current_dir().unwrap().to_str().unwrap().to_string());
+        std::env::current_dir()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string(),
+    );
     tracing::event!(tracing::Level::INFO, "{}", base_path);
 
     let conf_dir = PathBuf::from(base_path).join("conf");
@@ -50,7 +55,6 @@ mod tests {
             forex_data_url: None,
             api_key: Some("api_key".to_string()),
             secret: Some("secret_key".to_string()),
-
         };
         assert_eq!(config.api_key.unwrap(), "api_key")
     }
