@@ -1,10 +1,9 @@
-use crate::base::{AppState, Client};
-use crate::error::{Error, RequestError};
+use crate::base::AppState;
+use crate::error::RequestError;
 use axum::body::Body;
 use axum::http::{Method, StatusCode};
 use axum::response::{IntoResponse, Response};
-use serde::de::{DeserializeOwned, StdError};
-use std::sync::{Arc, Mutex};
+use serde::de::DeserializeOwned;
 use traidano::RequestType;
 
 pub mod account;

@@ -7,9 +7,10 @@ RUN cargo build --release
 
 FROM debian:bookworm
 
-RUN apt update && apt upgrade
-RUN apt install -y openssl
+RUN apt update && apt upgrade && apt install -y openssl ca-certificates
 
 COPY --from=builder /usr/src/traidano/target/release/traidano /usr/local/bin/traidano
+
+RUN update-ca-certificates
 
 CMD ["traidano"]
