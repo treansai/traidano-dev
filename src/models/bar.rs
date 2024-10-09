@@ -15,9 +15,9 @@ pub struct Bar {
     #[serde(rename = "t")]
     pub timestamp: String,
     #[serde(rename = "v")]
-    pub volume: u64,
-    #[serde(rename = "wv")]
-    pub wv: f64,
+    pub volume: f64,
+    #[serde(rename = "vw")]
+    pub vw: f64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

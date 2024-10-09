@@ -28,10 +28,21 @@ pub async fn get_bars(
                 RequestType::CryptoData => format!("us/bars?symbols={}&timeframe={}&limit={}", symbols_str, timeframe, limit),
                 _ => "".to_string()
             };
-            let bars =
-                rate_limited_request::<HashMap<String, Vec<Bar>>>(state, Method::GET, &path, Body::empty(), request_type)
+            let response =
+                rate_limited_request::<serde_json::Value>(state, Method::GET, &path, Body::empty(), request_type)
                     .await?;
-            Ok(bars)
+            // Extract the "bars" field from the response
+            let bars_field = response.get("bars").ok_or_else(|| {
+                tracing::error!("Missing 'bars' field in response");
+                RequestError::ApiError(StatusCode::INTERNAL_SERVER_ERROR)
+            })?;
+
+
+            let res: HashMap<String, Vec<Bar>> = serde_json::from_value(bars_field.clone()).unwrap_or_else(|err| {
+                tracing::error!("Cannot deserialize bar value: {}", err);
+                HashMap::new()
+            });
+            Ok(res)
         }
     }
 }
