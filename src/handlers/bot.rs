@@ -47,6 +47,9 @@ pub async fn stop_bot(
     Path(id): Path<String>,
 ) -> impl IntoResponse {
     let mut bot_manager = state.bot_manager.lock().await;
+
+    let id =  dao::bot::kill_bot(&state.db.clone(), id).await.unwrap_or("Bot not stopped".to_string());
+
     bot_manager.stop_bot(&id).await;
     StatusCode::OK
 }

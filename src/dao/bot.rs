@@ -49,6 +49,24 @@ pub async fn create_bot(db: &PgPool, data: BotConfig) -> Result<String, Error> {
     Ok(bot_id)
 }
 
+/// update bot
+pub async fn kill_bot(db: &PgPool, bot_id: String) -> Result<String, Error> {
+    let bot_id = sqlx::query!(
+        r#"
+            UPDATE bots
+            SET is_running = false
+            WHERE id = $1
+            RETURNING id
+        "#,
+        bot_id
+    )
+        .fetch_one(db)
+        .await?;
+
+    Ok(bot_id.id)
+}
+
+/// get_all_running_bot: get all running bots
 pub async fn get_all_running_bot(db: &PgPool) -> Result<Vec<BotInfo>, Error> {
     let bots_record = sqlx::query!(
         r#"
@@ -100,3 +118,5 @@ pub async fn get_all_running_bot(db: &PgPool) -> Result<Vec<BotInfo>, Error> {
 
     Ok(bots)
 }
+
+
