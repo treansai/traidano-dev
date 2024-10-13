@@ -5,13 +5,14 @@ receivers:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
-  
 
 exporters:
+  prometheus:
+    endpoint: 127.0.0.1:9090
+    auth:
+      authenticator: admin/admin
   debug:
     verbosity: detailed
-
-  
 
 service:
   pipelines:

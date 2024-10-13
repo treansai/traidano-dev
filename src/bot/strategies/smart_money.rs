@@ -9,9 +9,9 @@ use crate::models::order::Order;
 use crate::models::trade::{Side, TimeInForce, Type};
 use axum::extract::State;
 use axum::Json;
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
+use opentelemetry::KeyValue;
 use tokio::time::interval;
 
 // Define a structure to hold market data
@@ -61,6 +61,17 @@ fn analyze_order_flow(data: &[MarketData], window: usize) -> bool {
 
 pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
     let mut interval = interval(Duration::from_secs(300)); // Check every 5 minutes
+    let _support_gauge = state.meter.f64_gauge("support_gauge")
+        .with_description("The support value gauge")
+        .init();
+    let _resistance_gauge = state.meter.f64_gauge("resistance_gauge")
+        .with_description("The resistance value gauge")
+        .init();
+    let sell_order_hist = state.meter.f64_histogram("sell_order_hist")
+        .init();
+    let buy_order_hist = state.meter.f64_histogram("buy_order_hist")
+        .init();
+
 
     loop {
         interval.tick().await;
@@ -106,7 +117,7 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                     }
                 };
 
-                if bars.len() < 100 {
+                if bars.len() < config.lookback {
                     tracing::warn!("Not enough data for {}", symbol);
                     continue;
                 }
@@ -124,11 +135,19 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                 // Identify support and resistance
                 let (support, resistance) = identify_support_resistance(&prices, 20);
 
+
+
+                tracing::debug!("support value :{}, resistance value : {}", support.clone(), resistance.clone());
+
+
                 // Detect volume anomaly
                 let volume_anomaly = detect_volume_anomaly(&volumes, 2.0);
+                tracing::debug!("volue anomaly {}", volume_anomaly.clone());
+
 
                 // Analyze order flow
                 let bullish_order_flow = analyze_order_flow(&market_data, 20);
+                tracing::debug!("bullish_order_flow {}", bullish_order_flow.clone());
 
                 let last_price = *prices.last().unwrap();
 
@@ -156,6 +175,8 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                     .map(|p| p.qty)
                     .unwrap_or(0.0);
 
+                tracing::info!("The current position is: {}", current_position.clone());
+
                 // Trading logic
                 if last_price <= support
                     && volume_anomaly
@@ -164,7 +185,8 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                 {
                     // Potential smart money accumulation, consider buying
                     let qty = calculate_position_size(&account, last_price, config.risk_per_trade);
-
+                    
+                    tracing::debug!("position 'qty' calculated {}", qty.clone());
                     if qty > 0.0 {
                         let order = Order {
                             symbol: symbol.clone(),
@@ -177,6 +199,12 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                         };
 
                         create_order(State(state.clone()), Json(order)).await;
+                        buy_order_hist.record(
+                            qty as f64,
+                            &[
+                                KeyValue::new("bot_id", format!("{}", config.id)),
+                                KeyValue::new("bot_name", format!("{}", config.name)),
+                            ]);
                         tracing::info!("Buy order placed: {} shares of {}", qty, symbol);
                     }
                 } else if last_price >= resistance
@@ -187,6 +215,7 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                     // Potential smart money distribution, consider selling
                     let qty = calculate_position_size(&account, last_price, config.risk_per_trade);
 
+                    tracing::debug!("position 'qty' calculated {}", qty.clone());
                     if qty > 0.0 {
                         let order = Order {
                             symbol: symbol.clone(),
@@ -198,6 +227,12 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                             ..Order::default()
                         };
                         create_order(State(state.clone()), Json(order)).await;
+                        sell_order_hist.record(
+                            qty as f64,
+                                                &[
+                                                    KeyValue::new("bot_id", format!("{}", config.id)),
+                                                    KeyValue::new("bot_name", format!("{}", config.name)),
+                                                ]);
                         tracing::info!("Sell order placed: {} shares of {}", qty, symbol);
                     }
                 }

@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 // main.rs
 use crate::base::AppState;
 use crate::bot::bot_manager::BotManager;
@@ -24,14 +25,16 @@ use prometheus::{Encoder, TextEncoder};
 use serde::Serialize;
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
+use log::LevelFilter;
 use tokio::sync::Mutex;
 use tower_http::trace::TraceLayer;
 use tracing::instrument::WithSubscriber;
-use tracing::{debug, info, trace};
+use tracing::{debug, info, trace, Level, Subscriber};
 use tracing::{error, span};
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::{fmt, Registry};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tracing_subscriber::fmt::writer::MakeWriterExt;
 use traidano::{init_logs, init_metrics, init_tracer_provider};
 
 pub mod base;
@@ -65,11 +68,11 @@ async fn main() {
 
     // meter
     let meter_provider = init_metrics().unwrap();
-    global::set_meter_provider(meter_provider);
+    global::set_meter_provider(meter_provider.clone());
     let meter = global::meter_with_version("basic", Some("v1.0"), Some("schema_url"), None);
 
     // filter
-    let filter = EnvFilter::new("info")
+    let filter = EnvFilter::new("trace")
         .add_directive("hyper=error".parse().unwrap())
         .add_directive("tonic=error".parse().unwrap())
         .add_directive("reqwest=error".parse().unwrap());
@@ -77,7 +80,7 @@ async fn main() {
     tracing_subscriber::registry()
         .with(telemetry)
         .with(logger_layer)
-        .with(fmt::Layer::default())
+        .with(fmt::layer())
         .with(filter)
         .init();
 
@@ -170,6 +173,7 @@ async fn main() {
 
     global::shutdown_tracer_provider();
     logger_provider.shutdown().unwrap();
+    meter_provider.shutdown().unwrap();
 }
 
 async fn metrics_handler() -> String {

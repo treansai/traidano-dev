@@ -19,7 +19,10 @@ pub async fn get_positions(state: &AppState) -> Result<Vec<Position>, RequestErr
     )
     .await
     {
-        Ok(positions) => Ok(positions),
+        Ok(positions) => {
+            tracing::info!("positions {:?}", positions);
+            Ok(positions)
+        },
         Err(e) => {
             tracing::error!("Cannot get positions: {}", e);
             Err(e)

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_this_or_that::as_f64;
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Position {
     pub asset_id: String,
     pub symbol: String,

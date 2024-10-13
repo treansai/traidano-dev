@@ -37,13 +37,16 @@ services:
       - app-network
 
   grafana:
-    image: grafana/grafana:8.2.2
+    image: grafana/grafana:latest
     volumes:
       - ./prometheus/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
       - ./prometheus/grafana-dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
       - ./prometheus/traidano-dashboard.json:/var/lib/grafana/dashboards/traidano-dashboard.json
     ports:
       - "3000:3000"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http
     depends_on:
       - prometheus
     networks:
@@ -79,7 +82,7 @@ services:
         interval: 5s
         timeout: 5s
         retries: 5
-
+  
 volumes:
   postgres_data:
     driver: local
