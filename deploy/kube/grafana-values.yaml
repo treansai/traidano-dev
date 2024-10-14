@@ -1,3 +1,6 @@
+service:
+  enabled: true
+  type: NodePort
 persistence:
   type: pvc
   enabled: false
