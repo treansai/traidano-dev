@@ -9,11 +9,23 @@ pub enum AnyValue {
     Str(Option<String>),
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Qty {
+    Int(i32),
+    Float(f32),
+}
+
+impl Default for Qty {
+    fn default() -> Self {
+        Qty::Int(0)
+    }
+}
+
 // Todo: Add stop loss and take profit and order class
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Order {
     pub symbol: String,
-    pub qty: Option<i32>,
+    pub qty: Option<Qty>,
     pub national: Option<i32>,
     pub side: Side,
     #[serde(rename = "type")]

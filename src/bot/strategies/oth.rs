@@ -6,7 +6,7 @@ use crate::handlers::account::get_account;
 use crate::handlers::bar::get_bars;
 use crate::handlers::market::{get_positions, is_market_open};
 use crate::handlers::order::create_order;
-use crate::models::order::Order;
+use crate::models::order::{Order, Qty};
 use crate::models::trade::{Side, TimeInForce, Type};
 use axum::extract::State;
 use axum::Json;
@@ -128,7 +128,7 @@ pub async fn mean_reversion_strategy(state: Arc<AppState>, config: BotConfig) {
                                 if qty > 0.0 {
                                     let order = Order {
                                         symbol: symbol.clone(),
-                                        qty: Some(qty as i32),
+                                        qty: Some(Qty::Int(qty as i32)),
                                         side: side.clone(),
                                         order_type: Type::Limit,
                                         time_in_force: TimeInForce::Day,
