@@ -134,15 +134,8 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
 
                 // Identify support and resistance
                 let (support, resistance) = identify_support_resistance(&prices, 20);
-                support_gauge.record(support.clone(), &[
-                    KeyValue::new("bot_id", format!("{}", config.id)),
-                    KeyValue::new("bot_name", format!("{}", config.name)),
-                ]);
-
-                resistance_gauge.record(resistance.clone(), &[
-                    KeyValue::new("bot_id", format!("{}", config.id)),
-                    KeyValue::new("bot_name", format!("{}", config.name)),
-                ]);
+                support_gauge.record(support.clone(), &get_key_value_info(&config, &symbol));
+                resistance_gauge.record(resistance.clone(), &get_key_value_info(&config, &symbol));
 
 
                 tracing::debug!("support value :{}, resistance value : {}", support.clone(), resistance.clone());
@@ -247,4 +240,12 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
             }
         }
     }
+}
+
+fn get_key_value_info(config: &BotConfig, symbol: &String) -> Vec<KeyValue>{
+    vec![
+        KeyValue::new("bot_id", format!("{}", config.id)),
+        KeyValue::new("bot_name", format!("{}", config.name)),
+        KeyValue::new("symbol", format!("{}", symbol)),
+    ]
 }
