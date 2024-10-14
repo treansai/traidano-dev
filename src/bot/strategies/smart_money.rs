@@ -61,10 +61,10 @@ fn analyze_order_flow(data: &[MarketData], window: usize) -> bool {
 
 pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
     let mut interval = interval(Duration::from_secs(300)); // Check every 5 minutes
-    let _support_gauge = state.meter.f64_gauge("support_gauge")
+    let support_gauge = state.meter.f64_gauge("support_gauge")
         .with_description("The support value gauge")
         .init();
-    let _resistance_gauge = state.meter.f64_gauge("resistance_gauge")
+    let resistance_gauge = state.meter.f64_gauge("resistance_gauge")
         .with_description("The resistance value gauge")
         .init();
     let sell_order_hist = state.meter.f64_histogram("sell_order_hist")
@@ -134,7 +134,15 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
 
                 // Identify support and resistance
                 let (support, resistance) = identify_support_resistance(&prices, 20);
+                support_gauge.record(support.clone(), &[
+                    KeyValue::new("bot_id", format!("{}", config.id)),
+                    KeyValue::new("bot_name", format!("{}", config.name)),
+                ]);
 
+                resistance_gauge.record(resistance.clone(), &[
+                    KeyValue::new("bot_id", format!("{}", config.id)),
+                    KeyValue::new("bot_name", format!("{}", config.name)),
+                ]);
 
 
                 tracing::debug!("support value :{}, resistance value : {}", support.clone(), resistance.clone());

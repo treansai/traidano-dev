@@ -7,10 +7,10 @@ receivers:
         endpoint: 0.0.0.0:4318
 
 exporters:
-  prometheus:
-    endpoint: 127.0.0.1:9090
-    auth:
-      authenticator: admin/admin
+  prometheusremotewrite:
+    endpoint: http://prometheus:9090/api/v1/write
+    tls:
+      insecure: true
   debug:
     verbosity: detailed
 
@@ -21,7 +21,7 @@ service:
       exporters: [debug]
     metrics:
       receivers: [ otlp]
-      exporters: [ debug ]
+      exporters: [ debug, prometheusremotewrite]
     logs:
       receivers: [ otlp ]
       exporters: [ debug ]

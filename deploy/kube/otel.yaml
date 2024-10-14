@@ -18,6 +18,10 @@ data:
     exporters:
       debug:
         verbosity: detailed
+      prometheusremotewrite:
+        endpoint: http://prometheus:9090/api/v1/write
+        tls:
+        insecure: true
       
     service:
       pipelines:
@@ -26,7 +30,7 @@ data:
           exporters: [debug]
         metrics:
           receivers: [otlp]
-          exporters: [debug]
+          exporters: [debug, prometheusremotewrite]
         logs:
           receivers: [otlp]
           exporters: [debug]

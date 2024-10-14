@@ -28,11 +28,14 @@ services:
       - app-network
 
   prometheus:
-    image: prom/prometheus:v2.30.3
-    volumes:
-      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml
-    ports:
-      - "9090:9090"
+    container_name: prometheus
+    image: prom/prometheus:latest
+    command:
+      - "--web.enable-remote-write-receiver"
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
     networks:
       - app-network
 
@@ -44,9 +47,6 @@ services:
       - ./prometheus/traidano-dashboard.json:/var/lib/grafana/dashboards/traidano-dashboard.json
     ports:
       - "3000:3000"
-    environment:
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-      - OTEL_EXPORTER_OTLP_PROTOCOL=http
     depends_on:
       - prometheus
     networks:
@@ -60,6 +60,8 @@ services:
     ports:
       - "4317:4317"
       - "4318:4318"
+    depends_on:
+      - prometheus
     networks:
       - app-network
 

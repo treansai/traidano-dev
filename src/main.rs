@@ -71,8 +71,18 @@ async fn main() {
     global::set_meter_provider(meter_provider.clone());
     let meter = global::meter_with_version("basic", Some("v1.0"), Some("schema_url"), None);
 
+    // get env
+    let running_env = std::env::var("ENV").unwrap_or("dev".to_string());
+    info!("running app in {}", running_env.clone());
+    let trace_level = match running_env.as_str() {
+        "dev" => "trace",
+        "prod" => "info",
+        "debug" => "debug",
+        _ => "info"
+    };
+
     // filter
-    let filter = EnvFilter::new("trace")
+    let filter = EnvFilter::new(trace_level)
         .add_directive("hyper=error".parse().unwrap())
         .add_directive("tonic=error".parse().unwrap())
         .add_directive("reqwest=error".parse().unwrap());
