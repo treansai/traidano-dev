@@ -39,7 +39,7 @@ spec:
             - name: DATABASE_URL
               value: "postgres://adminroot:aafg79ydhkhdfqagk65a6kgd12@postgres.database.svc.cluster.local:5432/traidano"
             - name: ENV
-              value: "debug"
+              value: "prod"
             - name: OTLP_ENDPOINT
               value: "http://otel-collector.observers.svc.cluster.local:4318"
             - name: BASE_URL

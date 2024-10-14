@@ -13,11 +13,11 @@ pub async fn get_bars(
     symbols: &[String],
     timeframe: &str,
     limit: usize,
-    volatility_window: usize,
+    start_day: usize,
     request_type: &str,
 ) -> Result<HashMap<String, Vec<Bar>>, RequestError> {
     let request_type = RequestType::from(request_type);
-    let start_date = (chrono::Utc::now() - Duration::days(volatility_window as i64)).format("%Y-%m-%dT%H:%M:%SZ").to_string();
+    let start_date = (chrono::Utc::now() - Duration::days(start_day as i64)).format("%Y-%m-%dT%H:%M:%SZ").to_string();
     match request_type {
         RequestType::Order => {
             tracing::error!("Cannot get bar of historical data from order query type");

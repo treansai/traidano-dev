@@ -104,8 +104,8 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                     state.as_ref(),
                     &[symbol.clone()],
                     &config.timeframes[0],
-                    config.lookback,
-                    config.volatility_window,
+                    config.lookback.max(config.volatility_window),
+                    2,
                     request_type,
                 )
                 .await
@@ -133,7 +133,7 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                     .collect();
 
                 // Identify support and resistance
-                let (support, resistance) = identify_support_resistance(&prices, 20);
+                let (support, resistance) = identify_support_resistance(&prices, config.volatility_window);
                 support_gauge.record(support.clone(), &get_key_value_info(&config, &symbol));
                 resistance_gauge.record(resistance.clone(), &get_key_value_info(&config, &symbol));
 
@@ -142,12 +142,12 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
 
 
                 // Detect volume anomaly
-                let volume_anomaly = detect_volume_anomaly(&volumes, 2.0);
+                let volume_anomaly = detect_volume_anomaly(&volumes, config.threshold);
                 tracing::debug!("volue anomaly {}", volume_anomaly.clone());
 
 
                 // Analyze order flow
-                let bullish_order_flow = analyze_order_flow(&market_data, 20);
+                let bullish_order_flow = analyze_order_flow(&market_data, config.volatility_window);
                 tracing::debug!("bullish_order_flow {}", bullish_order_flow.clone());
 
                 let last_price = *prices.last().unwrap();
