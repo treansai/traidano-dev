@@ -85,6 +85,7 @@ async fn main() {
     let filter = EnvFilter::new(trace_level)
         .add_directive("hyper=error".parse().unwrap())
         .add_directive("tonic=error".parse().unwrap())
+        .add_directive("tower_http=debug".parse().unwrap())
         .add_directive("reqwest=error".parse().unwrap());
 
     tracing_subscriber::registry()
@@ -103,9 +104,9 @@ async fn main() {
         .unwrap_or("https://data.alpaca.markets/v2/stocks".to_string());
     let crypto_data_url = std::env::var("CRYPTO_DATA_URL")
         .unwrap_or("https://data.alpaca.markets/v1beta3/crypto/".to_string());
-    let api_key = std::env::var("API_KEY").unwrap_or("PKYPUBQDT5X9WO1ZJF9O".to_string());
+    let api_key = std::env::var("API_KEY").unwrap_or("PKHN2MOBD64Q1N4AUNIZ".to_string());
     let secret_key = std::env::var("SECRET_KEY")
-        .unwrap_or("QBTXA5FvMRTCbmmw8u3Nj7HaYoC1HwUD8tXg5aym".to_string());
+        .unwrap_or("HKqNazp498yYZHQVfaBU3ubF52JyVHFNxjH2ijoq".to_string());
 
     let api_config = ApiConfig {
         base_url,
