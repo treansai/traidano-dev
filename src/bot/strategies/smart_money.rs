@@ -60,7 +60,7 @@ fn analyze_order_flow(data: &[MarketData], window: usize) -> bool {
 }
 
 pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
-    let mut interval = interval(Duration::from_secs(300)); // Check every 5 minutes
+    let mut interval = interval(Duration::from_secs(30)); // Check every 5 minutes
     let support_gauge = state.meter.f64_gauge("support_gauge")
         .with_description("The support value gauge")
         .init();
@@ -71,7 +71,6 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
         .init();
     let buy_order_hist = state.meter.f64_histogram("buy_order_hist")
         .init();
-
 
     loop {
         interval.tick().await;
@@ -110,7 +109,7 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                 )
                 .await
                 {
-                    Ok(bars) => bars.get(symbol).unwrap().clone(),
+                    Ok(bars) => bars.get(symbol).expect(&format!("Cannot get bar for {}", symbol)).clone(),
                     Err(e) => {
                         tracing::error!("Failed to get historical data for {}: {:?}", symbol, e);
                         continue;
@@ -137,13 +136,11 @@ pub async fn smart_money_strategy(state: Arc<AppState>, config: BotConfig) {
                 support_gauge.record(support.clone(), &get_key_value_info(&config, &symbol));
                 resistance_gauge.record(resistance.clone(), &get_key_value_info(&config, &symbol));
 
-
                 tracing::debug!("support value :{}, resistance value : {}", support.clone(), resistance.clone());
-
 
                 // Detect volume anomaly
                 let volume_anomaly = detect_volume_anomaly(&volumes, config.threshold);
-                tracing::debug!("volue anomaly {}", volume_anomaly.clone());
+                tracing::debug!("value anomaly {}", volume_anomaly.clone());
 
 
                 // Analyze order flow
