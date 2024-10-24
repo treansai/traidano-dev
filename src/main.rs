@@ -97,16 +97,16 @@ async fn main() {
 
     // Get vars
     let base_url =
-        std::env::var("BASE_URL").unwrap_or("https://paper-api.alpaca.markets/v2/".to_string());
+        std::env::var("BASE_URL").expect("BASE_URL not set");
     let stream_url =
-        std::env::var("STREAM_URL").unwrap_or("https://paper-api.alpaca.markets/v2/".to_string());
+        std::env::var("STREAM_URL").expect("STREAM_URL not set");
     let stock_data_url = std::env::var("STOCK_DATA_URL")
-        .unwrap_or("https://data.alpaca.markets/v2/stocks".to_string());
+        .expect("STOCK_DATA_URL not set");
     let crypto_data_url = std::env::var("CRYPTO_DATA_URL")
-        .unwrap_or("https://data.alpaca.markets/v1beta3/crypto/".to_string());
-    let api_key = std::env::var("API_KEY").unwrap_or("PKHN2MOBD64Q1N4AUNIZ".to_string());
+        .expect("CRYPTO_DATA_URL not set");
+    let api_key = std::env::var("API_KEY").expect("API_KEY not set");
     let secret_key = std::env::var("SECRET_KEY")
-        .unwrap_or("HKqNazp498yYZHQVfaBU3ubF52JyVHFNxjH2ijoq".to_string());
+        .expect("SECRET_KEY is not set");
 
     let api_config = ApiConfig {
         base_url,

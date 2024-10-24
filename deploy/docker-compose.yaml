@@ -10,8 +10,8 @@ services:
       - OTLP_ENDPOINT=http://localhost:4318
       - BASE_URL=https://paper-api.alpaca.markets/v2
       - STREAM_URL=https://paper-api.alpaca.markets/v2
-      - API_KEY=PKGA4DTIP5MZM8H0KQJL
-      - SECRET_KEY=bEBazJLr2BdbyKDLNMPQKrSxGzwELRBYGICg5Jh1
+      - API_KEY=""
+      - SECRET_KEY=""
     depends_on:
       - grafana
       - db
