@@ -33,12 +33,6 @@ cd trading-bot
 cargo build
 ```
 
-3. Configure your environment variables:
-```bash
-cp .env.example .env
-# Edit .env with your Alpaca API credentials
-```
-
 ### Usage
 
 1. Start the trading bot:
@@ -57,15 +51,6 @@ strategies:
 ```
 
 ## Configuration
-
-### Rate Limiting
-
-The bot includes a configurable rate limiter to ensure compliance with exchange API limits:
-
-```rust
-REQUESTS_PER_MINUTE=300
-BURST_SIZE=10
-```
 
 ### OpenTelemetry Integration
 
