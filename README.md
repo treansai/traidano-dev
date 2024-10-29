@@ -76,40 +76,6 @@ exporters:
   otlp:
     endpoint: "http://localhost:4317"
 ```
-
-## Architecture
-
-```
-src/
-├── api/
-│   ├── alpaca.rs    # Alpaca API integration
-│   └── mod.rs       # API trait definitions
-├── strategy/
-│   ├── manager.rs   # Strategy management
-│   └── mod.rs       # Strategy trait definitions
-├── ratelimit/       # Rate limiting implementation
-├── telemetry/       # OpenTelemetry integration
-└── main.rs
-```
-
-## Adding New Exchanges
-
-To add support for a new exchange:
-
-1. Implement the `ExchangeAPI` trait for your exchange
-2. Add rate limiting configuration
-3. Update the strategy manager to support the new exchange
-4. Add appropriate tests
-
-Example:
-```rust
-impl ExchangeAPI for NewExchange {
-    fn place_order(&self, order: Order) -> Result<OrderResponse, Error> {
-        // Implementation
-    }
-}
-```
-
 ## Roadmap
 
 - [ ] Add support for Binance API
@@ -139,7 +105,6 @@ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
-[...]
 ```
 
 ## Acknowledgments
